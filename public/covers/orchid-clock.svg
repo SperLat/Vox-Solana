@@ -1,0 +1,8 @@
+<svg width="640" height="860" viewBox="0 0 640 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="860" fill="#17151F"/>
+  <rect x="70" y="76" width="500" height="708" rx="24" fill="#F6F3ED"/>
+  <circle cx="320" cy="354" r="142" fill="#101014"/>
+  <path d="M320 222V354L401 400" stroke="#F6F3ED" stroke-width="18" stroke-linecap="round"/>
+  <path d="M320 192C273 130 218 143 207 206C142 216 130 273 192 320C130 367 143 422 206 433C216 498 273 510 320 448C367 510 422 497 433 434C498 424 510 367 448 320C510 273 497 218 434 207C424 142 367 130 320 192Z" stroke="#B95D3D" stroke-width="20" stroke-linejoin="round"/>
+  <text x="102" y="720" fill="#101014" font-family="Georgia, serif" font-size="50" font-weight="700">The Orchid Clock</text>
+</svg>

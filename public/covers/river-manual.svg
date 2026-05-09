@@ -1,0 +1,7 @@
+<svg width="640" height="860" viewBox="0 0 640 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="860" fill="#102126"/>
+  <rect x="72" y="78" width="496" height="704" rx="24" fill="#6F8068"/>
+  <path d="M126 170C216 218 241 294 191 398C141 503 176 593 296 668C380 720 461 719 539 666" stroke="#F6F3ED" stroke-width="34" stroke-linecap="round"/>
+  <path d="M110 245H258M331 245H526M110 348H221M310 348H526M110 556H248M334 556H526" stroke="#102126" stroke-opacity=".38" stroke-width="14" stroke-linecap="round"/>
+  <text x="102" y="728" fill="#F6F3ED" font-family="Georgia, serif" font-size="48" font-weight="700">River Manual</text>
+</svg>

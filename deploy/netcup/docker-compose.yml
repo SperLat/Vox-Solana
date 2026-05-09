@@ -1,0 +1,30 @@
+services:
+  project-vox:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_SOLANA_RPC_URL: ${NEXT_PUBLIC_SOLANA_RPC_URL}
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVER_URL: ${SUPABASE_SERVER_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      NEXT_PUBLIC_DEMO_RECIPIENT_WALLET: ${NEXT_PUBLIC_DEMO_RECIPIENT_WALLET}
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.project-vox.rule=Host(`${PROJECT_VOX_DOMAIN}`)"
+      - "traefik.http.routers.project-vox.entrypoints=https"
+      - "traefik.http.routers.project-vox.tls=true"
+      - "traefik.http.routers.project-vox.tls.certresolver=letsencrypt"
+      - "traefik.http.services.project-vox.loadbalancer.server.port=3000"
+
+networks:
+  proxy:
+    external: true
+    name: coolify

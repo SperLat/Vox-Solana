@@ -1,0 +1,8 @@
+<svg width="640" height="860" viewBox="0 0 640 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="860" fill="#251512"/>
+  <rect x="70" y="76" width="500" height="708" rx="24" fill="#B95D3D"/>
+  <path d="M126 172H514M126 238H514M126 304H514M126 370H514M126 436H514M126 502H514M126 568H514M126 634H514" stroke="#F6F3ED" stroke-opacity=".48" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="320" cy="430" r="114" fill="#101014"/>
+  <path d="M248 450L301 314L331 420L392 369L346 549L317 452L248 450Z" fill="#F6F3ED"/>
+  <text x="100" y="720" fill="#F6F3ED" font-family="Georgia, serif" font-size="52" font-weight="700">The Red Library</text>
+</svg>

@@ -8,6 +8,10 @@ Audiobook narration is hard for independent authors to source and pay for. Voice
 
 Project Vox lets authors post narration bounties, narrators upload or record auditions, and authors or fans pay narrators directly with Solana devnet SOL.
 
+## Open Source
+
+Project Vox is licensed under `AGPL-3.0-only` with the full license text included in `LICENSE`.
+
 ## What Works
 
 - Browse seeded or live Supabase bounties.

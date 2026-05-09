@@ -16,6 +16,10 @@ No custom Solana program is used. Payments are direct wallet transfers with a me
 project-vox:bounty=<id>:submission=<id>
 ```
 
+## License
+
+Project Vox is open source under the GNU Affero General Public License v3.0 only (`AGPL-3.0-only`). See `LICENSE`.
+
 ## Local Setup
 
 ```bash

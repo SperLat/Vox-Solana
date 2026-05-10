@@ -66,7 +66,7 @@ export async function GET(request: Request, { params }: Params) {
             href: `${origin}/api/actions/submissions/${id}/tip?amount=0.05`
           },
           {
-            label: "Pay audition award",
+            label: `Tip ${bounty.reward_sol.toFixed(2)} SOL`,
             href: `${origin}/api/actions/submissions/${id}/tip?amount=${bounty.reward_sol}`
           }
         ]

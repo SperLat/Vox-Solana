@@ -1939,7 +1939,7 @@ function BountyDetail({
                       rel="noreferrer"
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
                     >
-                      Open tip action <ArrowUpRight className="h-4 w-4" />
+                      View action JSON <ArrowUpRight className="h-4 w-4" />
                     </a>
                   </div>
                   <SubmissionReviewPanel
@@ -2235,7 +2235,7 @@ function TipActionPreviewPanel({
             <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Shareable tip link</h3>
           </div>
           <p className="mt-2 text-sm font-semibold text-ink/65">
-            Public Solana Action link for tipping {submission.narrator_name} on {bounty.title}. The full author award is {bounty.reward_sol.toFixed(2)} SOL.
+            Copy this public Solana Action link to share tipping for {submission.narrator_name}. A normal browser shows JSON; supported clients render it as tip buttons.
           </p>
           <p className="mt-2 break-all rounded-lg bg-white px-3 py-2 text-xs font-bold text-ink/55">{actionUrl}</p>
           <p className="mt-2 break-all text-xs font-bold text-ink/45">{paymentMemo(bounty.id, submission.id)}</p>
@@ -2248,7 +2248,7 @@ function TipActionPreviewPanel({
             rel="noreferrer"
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-3 text-sm font-black text-paper transition hover:bg-ink/90"
           >
-            Open tip action <ArrowUpRight className="h-4 w-4" />
+            View action JSON <ArrowUpRight className="h-4 w-4" />
           </a>
         </div>
       </div>

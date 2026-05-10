@@ -29,6 +29,9 @@ type WalletContextValue = {
 
 declare global {
   interface Window {
+    phantom?: {
+      solana?: BrowserWalletProvider;
+    };
     solana?: BrowserWalletProvider;
     solflare?: BrowserWalletProvider;
   }
@@ -49,7 +52,11 @@ export function WalletContextProvider({ children }: Readonly<{ children: ReactNo
       connect: async (nextWalletName) => {
         const nextProvider = getProvider(nextWalletName);
         if (!nextProvider) {
-          throw new Error(nextWalletName === "phantom" ? "Phantom wallet was not found." : "Solflare wallet was not found.");
+          throw new Error(
+            nextWalletName === "phantom"
+              ? "Phantom is not installed or not enabled in this browser."
+              : "Solflare is not installed or not enabled in this browser."
+          );
         }
 
         const response = await nextProvider.connect();
@@ -106,8 +113,11 @@ function getProvider(walletName: BrowserWalletName) {
     return null;
   }
 
-  if (walletName === "phantom" && window.solana?.isPhantom) {
-    return window.solana;
+  if (walletName === "phantom") {
+    const phantomProvider = window.phantom?.solana || window.solana;
+    if (phantomProvider?.isPhantom) {
+      return phantomProvider;
+    }
   }
 
   if (walletName === "solflare" && window.solflare) {

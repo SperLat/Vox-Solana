@@ -827,6 +827,16 @@ export function MarketplaceApp() {
     setToast({ tone: "success", message: "Local demo state reset. Supabase data was not changed." });
   }
 
+  function navigateToSection(sectionId: string, role?: DemoRole) {
+    if (role) {
+      setDemoRole(role);
+    }
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   if (!state) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
@@ -841,7 +851,7 @@ export function MarketplaceApp() {
   return (
     <main className="min-h-screen px-4 py-5 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <header className="flex flex-col gap-4 rounded-lg border border-ink/10 bg-white/70 p-4 shadow-line backdrop-blur md:flex-row md:items-center md:justify-between">
+        <header className="flex flex-col gap-4 rounded-lg border border-ink/10 bg-white/70 p-4 shadow-line backdrop-blur xl:flex-row xl:items-center xl:justify-between">
           <div className="flex items-center gap-3">
             <div className="grid h-11 w-11 place-items-center rounded-lg bg-ink text-paper">
               <Headphones className="h-6 w-6" />
@@ -851,13 +861,20 @@ export function MarketplaceApp() {
               <p className="text-sm font-medium text-ink/60">Audiobook narration bounties on Solana devnet</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusPill icon={<BookOpen className="h-4 w-4" />} label={`${stats.bounties} bounties`} />
-            <StatusPill icon={<Mic className="h-4 w-4" />} label={`${stats.submissions} auditions`} />
-            <StatusPill icon={<CircleDollarSign className="h-4 w-4" />} label={`${stats.volume.toFixed(2)} SOL paid`} />
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <TopNav onNavigate={navigateToSection} />
             <WalletControls />
           </div>
         </header>
+
+        <ProductLaunchPanel
+          stats={stats}
+          connected={connected}
+          publicKey={publicKey?.toBase58() || ""}
+          onBrowse={() => navigateToSection("bounty-board", "fan")}
+          onAuthor={() => navigateToSection("create-bounty", "author")}
+          onNarrator={() => navigateToSection("submit-audition", "narrator")}
+        />
 
         {demoMode ? <RoleSwitch role={demoRole} onChange={setDemoRole} /> : null}
 
@@ -907,7 +924,7 @@ export function MarketplaceApp() {
               </div>
             </Panel>
 
-            <Panel className={demoMode && demoRole === "fan" ? "ring-2 ring-vox/20" : ""}>
+            <Panel id="bounty-board" className={`scroll-mt-5 ${demoMode && demoRole === "fan" ? "ring-2 ring-vox/20" : ""}`}>
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Bounty board</h2>
                 <Filter className="h-4 w-4 text-clay" />
@@ -961,7 +978,7 @@ export function MarketplaceApp() {
               </div>
             </Panel>
 
-            <Panel className={demoMode && demoRole === "author" ? "ring-2 ring-clay/25" : ""}>
+            <Panel id="create-bounty" className={`scroll-mt-5 ${demoMode && demoRole === "author" ? "ring-2 ring-clay/25" : ""}`}>
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 text-clay" />
                 <h2 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Post a bounty</h2>
@@ -1058,7 +1075,7 @@ export function MarketplaceApp() {
               />
             ) : null}
 
-            <Panel className={demoMode && demoRole === "narrator" ? "ring-2 ring-sage/25" : ""}>
+            <Panel id="submit-audition" className={`scroll-mt-5 ${demoMode && demoRole === "narrator" ? "ring-2 ring-sage/25" : ""}`}>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-serif text-2xl font-semibold">Submit an audition</h2>
@@ -1155,6 +1172,123 @@ export function MarketplaceApp() {
         </section>
       </div>
     </main>
+  );
+}
+
+function TopNav({ onNavigate }: { onNavigate: (sectionId: string, role?: DemoRole) => void }) {
+  const items: Array<{ label: string; sectionId: string; role?: DemoRole }> = [
+    { label: "Dashboard", sectionId: "dashboard" },
+    { label: "Bounties", sectionId: "bounty-board", role: "fan" },
+    { label: "Author", sectionId: "create-bounty", role: "author" },
+    { label: "Narrator", sectionId: "submit-audition", role: "narrator" },
+    { label: "Receipts", sectionId: "bounty-detail" }
+  ];
+
+  return (
+    <nav className="flex flex-wrap items-center gap-1 rounded-lg border border-ink/10 bg-paper p-1" aria-label="Project Vox navigation">
+      {items.map((item) => (
+        <button
+          key={item.label}
+          type="button"
+          className="min-h-9 rounded-md px-3 text-sm font-black text-ink/65 transition hover:bg-white hover:text-ink"
+          onClick={() => onNavigate(item.sectionId, item.role)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function ProductLaunchPanel({
+  stats,
+  connected,
+  publicKey,
+  onBrowse,
+  onAuthor,
+  onNarrator
+}: {
+  stats: { bounties: number; submissions: number; volume: number };
+  connected: boolean;
+  publicKey: string;
+  onBrowse: () => void;
+  onAuthor: () => void;
+  onNarrator: () => void;
+}) {
+  return (
+    <section id="dashboard" className="scroll-mt-5 rounded-lg border border-ink/10 bg-white/80 p-5 shadow-line backdrop-blur">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_360px] lg:items-start">
+        <div>
+          <h1 className="max-w-3xl font-serif text-4xl font-semibold leading-none sm:text-5xl">
+            Hire audiobook voices. Pay the selected audition on-chain.
+          </h1>
+          <p className="mt-4 max-w-2xl text-base font-medium leading-7 text-ink/65">
+            Authors publish a short excerpt, narrators submit real audio, and verified devnet receipts link payment to the chosen take.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button type="button" icon={<Plus className="h-4 w-4" />} onClick={onAuthor}>
+              Post bounty
+            </Button>
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-4 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+              onClick={onNarrator}
+            >
+              <Mic className="h-4 w-4" />
+              Submit audition
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-white px-4 text-sm font-black text-ink/70 transition hover:border-ink/30 hover:text-ink"
+              onClick={onBrowse}
+            >
+              <Search className="h-4 w-4" />
+              Browse bounties
+            </button>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <WorkflowCard icon={<BookOpen className="h-4 w-4" />} title="Author posts" detail="Audition award plus full narration budget." />
+            <WorkflowCard icon={<FileAudio2 className="h-4 w-4" />} title="Narrator auditions" detail="Audio take, note, and payout wallet." />
+            <WorkflowCard icon={<ReceiptText className="h-4 w-4" />} title="Receipt verifies" detail="Recipient, amount, and memo checked server-side." />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-ink/10 bg-paper/80 p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-ink text-paper">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-ink/45">Account</p>
+              <p className="mt-1 truncate text-sm font-black">{connected ? truncateWallet(publicKey) : "No wallet connected"}</p>
+              <p className="mt-1 text-xs font-semibold leading-5 text-ink/55">
+                Wallet connection is the login layer for this MVP.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <WalletControls />
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            <Metric label="Bounties" value={`${stats.bounties}`} />
+            <Metric label="Auditions" value={`${stats.submissions}`} />
+            <Metric label="Paid" value={`${stats.volume.toFixed(2)}`} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WorkflowCard({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) {
+  return (
+    <div className="rounded-lg border border-ink/10 bg-paper/70 p-3">
+      <div className="flex items-center gap-2 text-sm font-black">
+        <span className="text-clay">{icon}</span>
+        {title}
+      </div>
+      <p className="mt-2 text-xs font-semibold leading-5 text-ink/55">{detail}</p>
+    </div>
   );
 }
 
@@ -1437,7 +1571,7 @@ function BountyDetail({
   const blinkSubmission = orderedSubmissions.find((submission) => submission.selected) || orderedSubmissions[0] || null;
 
   return (
-    <Panel className="overflow-hidden p-0">
+    <Panel id="bounty-detail" className="scroll-mt-5 overflow-hidden p-0">
       <div className="grid gap-0 lg:grid-cols-[260px_minmax(0,1fr)]">
         <div className="relative min-h-72 bg-ink">
           <Image src={bounty.cover_art || "/covers/river-manual.svg"} alt="" fill className="object-cover" priority />
@@ -1991,8 +2125,12 @@ function NarratorDirectoryPanel({ profiles, onOpenBounty }: { profiles: Narrator
   );
 }
 
-function Panel({ children, className = "" }: Readonly<{ children: ReactNode; className?: string }>) {
-  return <div className={`rounded-lg border border-ink/10 bg-white/75 p-4 shadow-line backdrop-blur ${className}`}>{children}</div>;
+function Panel({ children, className = "", id }: Readonly<{ children: ReactNode; className?: string; id?: string }>) {
+  return (
+    <div id={id} className={`rounded-lg border border-ink/10 bg-white/75 p-4 shadow-line backdrop-blur ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -2000,15 +2138,6 @@ function Metric({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-ink/10 bg-white px-2 py-3">
       <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/40">{label}</p>
       <p className="mt-1 text-sm font-black">{value}</p>
-    </div>
-  );
-}
-
-function StatusPill({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="inline-flex h-10 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink/70">
-      {icon}
-      {label}
     </div>
   );
 }
@@ -2025,9 +2154,11 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
 function WalletControls() {
   const { connected, connect, disconnect, walletName, publicKey } = useVoxWallet();
   const [pendingWallet, setPendingWallet] = useState<"phantom" | "solflare" | "disconnect" | null>(null);
+  const [walletError, setWalletError] = useState<{ wallet: "phantom" | "solflare"; message: string } | null>(null);
 
   async function runWalletAction(action: "phantom" | "solflare" | "disconnect") {
     setPendingWallet(action);
+    setWalletError(null);
     try {
       if (action === "disconnect") {
         await disconnect();
@@ -2035,7 +2166,9 @@ function WalletControls() {
         await connect(action);
       }
     } catch (error) {
-      window.alert(getErrorMessage(error));
+      if (action !== "disconnect") {
+        setWalletError({ wallet: action, message: getErrorMessage(error) });
+      }
     } finally {
       setPendingWallet(null);
     }
@@ -2054,21 +2187,36 @@ function WalletControls() {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        className="inline-flex h-10 items-center gap-2 rounded-lg bg-ink px-3 text-sm font-black text-paper transition hover:bg-ink/90"
-        onClick={() => void runWalletAction("phantom")}
-      >
-        {pendingWallet === "phantom" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-        Phantom
-      </button>
-      <button
-        className="inline-flex h-10 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
-        onClick={() => void runWalletAction("solflare")}
-      >
-        {pendingWallet === "solflare" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-        Solflare
-      </button>
+    <div className="min-w-0">
+      <div className="flex flex-wrap gap-2">
+        <button
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-ink px-3 text-sm font-black text-paper transition hover:bg-ink/90"
+          onClick={() => void runWalletAction("phantom")}
+        >
+          {pendingWallet === "phantom" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+          Login with Phantom
+        </button>
+        <button
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+          onClick={() => void runWalletAction("solflare")}
+        >
+          {pendingWallet === "solflare" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+          Login with Solflare
+        </button>
+      </div>
+      {walletError ? (
+        <div className="mt-2 rounded-lg border border-clay/25 bg-clay/10 px-3 py-2 text-xs font-semibold leading-5 text-clay">
+          <p>{walletError.message}</p>
+          <a
+            href={walletError.wallet === "phantom" ? "https://phantom.com/download" : "https://solflare.com/download"}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-flex items-center gap-1 font-black underline decoration-clay/40 underline-offset-4"
+          >
+            Install {walletError.wallet === "phantom" ? "Phantom" : "Solflare"} <ArrowUpRight className="h-3 w-3" />
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }

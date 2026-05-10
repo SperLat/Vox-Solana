@@ -60,6 +60,7 @@ type Toast = {
 
 type BoardStatusFilter = "all" | BountyStatus;
 type BoardSort = "newest" | "reward_desc" | "reward_asc" | "most_auditions";
+type DemoRole = "author" | "narrator" | "fan";
 type BoardFilters = {
   query: string;
   genre: string;
@@ -122,6 +123,39 @@ const demoSteps = [
   "Verify receipt",
   "Open Blink"
 ];
+const demoRoles: DemoRole[] = ["author", "narrator", "fan"];
+const roleGuides: Record<
+  DemoRole,
+  {
+    label: string;
+    icon: ReactNode;
+    headline: string;
+    description: string;
+    primaryAction: string;
+  }
+> = {
+  author: {
+    label: "Author",
+    icon: <BookOpen className="h-4 w-4" />,
+    headline: "Author view",
+    description: "Create a narration bounty, compare auditions, select a narrator, then pay with devnet SOL.",
+    primaryAction: "Use Post a bounty and the review controls."
+  },
+  narrator: {
+    label: "Narrator",
+    icon: <Mic className="h-4 w-4" />,
+    headline: "Narrator view",
+    description: "Browse open bounties, upload or record an audition, and set the wallet that should receive payment.",
+    primaryAction: "Use Submit an audition."
+  },
+  fan: {
+    label: "Fan",
+    icon: <CircleDollarSign className="h-4 w-4" />,
+    headline: "Fan view",
+    description: "Listen to auditions, open a Blink-style Action, and tip a narrator directly on Solana devnet.",
+    primaryAction: "Use the Blink and payment receipt panels."
+  }
+};
 
 const MAX_AUDIO_MB = 15;
 const MAX_COVER_MB = 6;
@@ -196,6 +230,7 @@ export function MarketplaceApp() {
   const { publicKey, sendTransaction, connected } = useVoxWallet();
   const connection = useMemo(() => new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl("devnet"), "confirmed"), []);
   const [state, setState] = useState<MarketplaceState | null>(null);
+  const [demoRole, setDemoRole] = useState<DemoRole>("author");
   const [selectedBountyId, setSelectedBountyId] = useState<string>("");
   const [bountyForm, setBountyForm] = useState(initialBountyForm);
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -808,6 +843,8 @@ export function MarketplaceApp() {
           </div>
         </header>
 
+        <RoleSwitch role={demoRole} onChange={setDemoRole} />
+
         {toast ? (
           <div
             className={`flex items-start justify-between gap-4 rounded-lg border px-4 py-3 text-sm font-semibold shadow-line ${
@@ -852,7 +889,7 @@ export function MarketplaceApp() {
               </div>
             </Panel>
 
-            <Panel>
+            <Panel className={demoRole === "fan" ? "ring-2 ring-vox/20" : ""}>
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Bounty board</h2>
                 <Filter className="h-4 w-4 text-clay" />
@@ -903,7 +940,7 @@ export function MarketplaceApp() {
               </div>
             </Panel>
 
-            <Panel>
+            <Panel className={demoRole === "author" ? "ring-2 ring-clay/25" : ""}>
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 text-clay" />
                 <h2 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Post a bounty</h2>
@@ -988,7 +1025,7 @@ export function MarketplaceApp() {
               />
             ) : null}
 
-            <Panel>
+            <Panel className={demoRole === "narrator" ? "ring-2 ring-sage/25" : ""}>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-serif text-2xl font-semibold">Submit an audition</h2>
@@ -1159,6 +1196,48 @@ function BoardControls({
         </button>
       </div>
     </div>
+  );
+}
+
+function RoleSwitch({ role, onChange }: { role: DemoRole; onChange: (role: DemoRole) => void }) {
+  const activeGuide = roleGuides[role];
+
+  return (
+    <section className="rounded-lg border border-ink/10 bg-white/75 p-4 shadow-line backdrop-blur">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-ink/45">
+            <Users className="h-4 w-4 text-vox" />
+            Demo role
+          </div>
+          <h2 className="mt-2 font-serif text-2xl font-semibold">{activeGuide.headline}</h2>
+          <p className="mt-1 max-w-3xl text-sm font-medium leading-6 text-ink/65">{activeGuide.description}</p>
+          <p className="mt-2 text-xs font-black text-clay">{activeGuide.primaryAction}</p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
+          {demoRoles.map((roleOption) => {
+            const guide = roleGuides[roleOption];
+            const active = roleOption === role;
+            return (
+              <button
+                key={roleOption}
+                type="button"
+                className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-black transition ${
+                  active ? "border-ink bg-ink text-paper shadow-line" : "border-ink/10 bg-paper text-ink hover:border-ink/30 hover:bg-white"
+                }`}
+                onClick={() => onChange(roleOption)}
+              >
+                {guide.icon}
+                {guide.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mt-4 rounded-lg border border-vox/15 bg-vox/5 px-3 py-2 text-xs font-semibold leading-5 text-ink/65">
+        No account is required for this hackathon build. The connected wallet is the payment identity, and this switch clarifies which workflow you are demoing.
+      </div>
+    </section>
   );
 }
 

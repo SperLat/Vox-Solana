@@ -47,11 +47,12 @@ export async function GET(request: Request, { params }: Params) {
   const { id } = await params;
   const { bounty, submission } = await getActionSubmissionInfo(id);
   const origin = getPublicOrigin(request);
+  const icon = absoluteUrl(bounty.cover_art || "/action-icon.svg", origin);
 
   return NextResponse.json(
     {
       type: "action",
-      icon: `${origin}/action-icon.svg`,
+      icon,
       title: `Tip ${submission.narrator_name}`,
       description: `Send devnet SOL to support this narration audition for "${bounty.title}". Payments are direct wallet transfers, not escrow.`,
       label: `Tip ${Math.min(0.05, bounty.reward_sol).toFixed(2)} SOL`,
@@ -74,6 +75,14 @@ export async function GET(request: Request, { params }: Params) {
     },
     { headers: ACTIONS_HEADERS }
   );
+}
+
+function absoluteUrl(value: string, origin: string) {
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  return `${origin}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
 export async function POST(request: Request, { params }: Params) {

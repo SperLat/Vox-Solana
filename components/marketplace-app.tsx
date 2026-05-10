@@ -794,10 +794,10 @@ export function MarketplaceApp() {
   }
 
   async function copyBlinkLink(submissionId: string) {
-    const link = `${blinkOrigin}/api/actions/submissions/${submissionId}/tip`;
+    const link = `${blinkOrigin}/tip/${submissionId}`;
     try {
       await navigator.clipboard.writeText(link);
-      setToast({ tone: "success", message: "Tip link copied." });
+      setToast({ tone: "success", message: "Share page link copied." });
     } catch {
       setToast({ tone: "info", message: link });
     }
@@ -1939,7 +1939,7 @@ function BountyDetail({
                       rel="noreferrer"
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
                     >
-                      View action JSON <ArrowUpRight className="h-4 w-4" />
+                      View share page <ArrowUpRight className="h-4 w-4" />
                     </a>
                   </div>
                   <SubmissionReviewPanel
@@ -2224,6 +2224,7 @@ function TipActionPreviewPanel({
   blinkOrigin: string;
   onCopyBlink: (submissionId: string) => void;
 }) {
+  const shareUrl = `${blinkOrigin}/tip/${submission.id}`;
   const actionUrl = `${blinkOrigin}/api/actions/submissions/${submission.id}/tip`;
 
   return (
@@ -2235,20 +2236,28 @@ function TipActionPreviewPanel({
             <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Shareable tip link</h3>
           </div>
           <p className="mt-2 text-sm font-semibold text-ink/65">
-            Copy this public Solana Action link to share tipping for {submission.narrator_name}. A normal browser shows JSON; supported clients render it as tip buttons.
+            Share this public page for tipping {submission.narrator_name}. It includes cover art, audio playback, and the Solana Action URL for supported clients.
           </p>
-          <p className="mt-2 break-all rounded-lg bg-white px-3 py-2 text-xs font-bold text-ink/55">{actionUrl}</p>
+          <p className="mt-2 break-all rounded-lg bg-white px-3 py-2 text-xs font-bold text-ink/55">{shareUrl}</p>
           <p className="mt-2 break-all text-xs font-bold text-ink/45">{paymentMemo(bounty.id, submission.id)}</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <IconButton icon={<Copy className="h-4 w-4" />} label="Copy tip link" onClick={() => onCopyBlink(submission.id)} />
           <a
-            href={actionUrl}
+            href={shareUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-3 text-sm font-black text-paper transition hover:bg-ink/90"
           >
-            View action JSON <ArrowUpRight className="h-4 w-4" />
+            View share page <ArrowUpRight className="h-4 w-4" />
+          </a>
+          <a
+            href={actionUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-white px-3 text-sm font-black text-ink/70 transition hover:border-ink/30 hover:text-ink"
+          >
+            Action JSON <ArrowUpRight className="h-4 w-4" />
           </a>
         </div>
       </div>

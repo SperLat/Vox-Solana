@@ -8,6 +8,7 @@ Solana devnet marketplace for audiobook narration bounties. Authors post paid au
 - Direct Phantom/Solflare browser wallet connector plus `@solana/web3.js`
 - Supabase database and public storage bucket for live bounties and audio
 - Wallet profile workspace for authors and narrators
+- Public visual tip pages at `/tip/[submission-id]`
 - Solana Actions endpoint at `/api/actions/submissions/[id]/tip`
 - Payment verifier endpoint at `/api/payments/verify`
 
@@ -76,7 +77,7 @@ The hackathon policies are intentionally permissive for public demo writes. Tigh
 6. Pay the selected narrator the audition award with devnet SOL.
 7. Wait for verification status: verified, pending verification, or failed.
 8. Retry verification if RPC was temporarily unavailable.
-9. Copy or open the shareable tip action link from an audition.
+9. Copy or open the public tip page from an audition, or inspect its Solana Action JSON.
 
 Only server-verified payments mark a bounty as paid. If devnet RPC is unreachable, the receipt remains pending instead of being shown as paid.
 

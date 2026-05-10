@@ -1014,22 +1014,7 @@ export function MarketplaceApp() {
               />
             ) : null}
 
-            <Panel>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h1 className="font-serif text-3xl font-semibold leading-tight">Find a voice for the next chapter.</h1>
-                  <p className="mt-2 text-sm leading-6 text-ink/60">
-                    Authors post paid audition awards with full narration budgets, and Solana receipts prove direct payment.
-                  </p>
-                </div>
-                <Image src="/brand-mark.svg" width={76} height={76} alt="" className="hidden shrink-0 sm:block" priority />
-              </div>
-              <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                <Metric label="Network" value="Devnet" />
-                <Metric label="Escrow" value="No" />
-                <Metric label="Memo" value="Yes" />
-              </div>
-            </Panel>
+            <StudioProofPanel />
 
             <Panel id="bounty-board" className={`scroll-mt-5 ${demoMode && demoRole === "fan" ? "ring-2 ring-vox/20" : ""}`}>
               <div className="flex items-center justify-between">
@@ -1304,22 +1289,42 @@ function ProductLaunchPanel({
   onNarrator: () => void;
 }) {
   return (
-    <section id="dashboard" className="scroll-mt-5 rounded-lg border border-ink/10 bg-white/80 p-5 shadow-line backdrop-blur">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_360px] lg:items-start">
-        <div>
-          <h1 className="max-w-3xl font-serif text-4xl font-semibold leading-none sm:text-5xl">
+    <section id="dashboard" className="relative scroll-mt-5 overflow-hidden rounded-lg border border-ink/10 bg-ink text-paper shadow-line">
+      <Image
+        src="/studio/vox-recording-close.jpg"
+        alt="Recording microphone in a dark vocal booth"
+        fill
+        priority
+        sizes="(max-width: 1024px) 100vw, 1280px"
+        className="object-cover object-[68%_center]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/70 to-ink/5" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-transparent to-ink/15" />
+
+      <div className="relative grid min-h-[560px] gap-8 p-5 sm:p-7 lg:grid-cols-[minmax(0,1.35fr)_360px] lg:items-end">
+        <div className="max-w-3xl py-8 sm:py-12">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-paper/15 bg-paper/10 px-3 py-2 text-xs font-black text-paper/80 backdrop-blur">
+            <Headphones className="h-4 w-4" />
+            Project Vox
+          </div>
+          <h1 className="font-serif text-4xl font-semibold leading-none sm:text-6xl lg:text-7xl">
             Hire audiobook voices. Pay the selected audition on-chain.
           </h1>
-          <p className="mt-4 max-w-2xl text-base font-medium leading-7 text-ink/65">
+          <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-paper/72 sm:text-lg">
             Authors publish a short excerpt, narrators submit real audio, and verified devnet receipts link payment to the chosen take.
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Button type="button" icon={<Plus className="h-4 w-4" />} onClick={onAuthor}>
-              Post bounty
-            </Button>
+          <div className="mt-6 flex flex-wrap gap-2">
             <button
               type="button"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-4 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-paper px-4 text-sm font-black text-ink transition hover:bg-white"
+              onClick={onAuthor}
+            >
+              <Plus className="h-4 w-4" />
+              Post bounty
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-paper/20 bg-paper/10 px-4 text-sm font-black text-paper transition hover:border-paper/40 hover:bg-paper/20"
               onClick={onNarrator}
             >
               <Mic className="h-4 w-4" />
@@ -1327,31 +1332,29 @@ function ProductLaunchPanel({
             </button>
             <button
               type="button"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-white px-4 text-sm font-black text-ink/70 transition hover:border-ink/30 hover:text-ink"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-paper/15 bg-ink/30 px-4 text-sm font-black text-paper/80 transition hover:border-paper/40 hover:text-paper"
               onClick={onBrowse}
             >
               <Search className="h-4 w-4" />
               Browse bounties
             </button>
           </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <WorkflowCard icon={<BookOpen className="h-4 w-4" />} title="Author posts" detail="Audition award plus full narration budget." />
-            <WorkflowCard icon={<FileAudio2 className="h-4 w-4" />} title="Narrator auditions" detail="Audio take, note, and payout wallet." />
-            <WorkflowCard icon={<ReceiptText className="h-4 w-4" />} title="Receipt verifies" detail="Recipient, amount, and memo checked server-side." />
+          <div className="mt-8 grid gap-4 border-t border-paper/15 pt-5 sm:grid-cols-3">
+            <HeroStep icon={<BookOpen className="h-4 w-4" />} title="Author posts" detail="Audition award plus full narration budget." />
+            <HeroStep icon={<FileAudio2 className="h-4 w-4" />} title="Narrator auditions" detail="Audio take, note, and payout wallet." />
+            <HeroStep icon={<ReceiptText className="h-4 w-4" />} title="Receipt verifies" detail="Recipient, amount, and memo checked server-side." />
           </div>
         </div>
 
-        <div className="rounded-lg border border-ink/10 bg-paper/80 p-4">
+        <div className="rounded-lg border border-paper/20 bg-paper/95 p-4 text-ink shadow-soft backdrop-blur">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-ink text-paper">
               <Wallet className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-ink/45">Account</p>
+              <p className="text-xs font-black uppercase text-ink/45">Account</p>
               <p className="mt-1 truncate text-sm font-black">{connected ? profile?.display_name || truncateWallet(publicKey) : "No wallet connected"}</p>
-              <p className="mt-1 text-xs font-semibold leading-5 text-ink/55">
-                Wallet connection is the login layer for this MVP.
-              </p>
+              <p className="mt-1 text-xs font-semibold leading-5 text-ink/55">Wallet connection is the login layer for this MVP.</p>
             </div>
           </div>
           <div className="mt-4">
@@ -1368,15 +1371,46 @@ function ProductLaunchPanel({
   );
 }
 
-function WorkflowCard({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) {
+function HeroStep({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) {
   return (
-    <div className="rounded-lg border border-ink/10 bg-paper/70 p-3">
+    <div>
       <div className="flex items-center gap-2 text-sm font-black">
-        <span className="text-clay">{icon}</span>
+        <span className="text-paper/70">{icon}</span>
         {title}
       </div>
-      <p className="mt-2 text-xs font-semibold leading-5 text-ink/55">{detail}</p>
+      <p className="mt-2 text-xs font-semibold leading-5 text-paper/60">{detail}</p>
     </div>
+  );
+}
+
+function StudioProofPanel() {
+  return (
+    <Panel className="overflow-hidden p-0">
+      <div className="relative aspect-[16/10] bg-ink">
+        <Image
+          src="/studio/vox-recording-wide.jpg"
+          alt="Wide shot of a studio microphone and ring light"
+          fill
+          sizes="360px"
+          className="object-cover object-[70%_center]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/10 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-4 text-paper">
+          <p className="text-xs font-black uppercase text-paper/60">Studio workflow</p>
+          <h2 className="mt-1 font-serif text-2xl font-semibold leading-none">Real voices, real receipts.</h2>
+        </div>
+      </div>
+      <div className="p-4">
+        <p className="text-sm font-semibold leading-6 text-ink/60">
+          Bounties start with a short audition and can lead into the full narration budget after the author selects a voice.
+        </p>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <Metric label="Network" value="Devnet" />
+          <Metric label="Escrow" value="No" />
+          <Metric label="Memo" value="Yes" />
+        </div>
+      </div>
+    </Panel>
   );
 }
 
@@ -1934,7 +1968,7 @@ function BountyDetail({
                   <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-center">
                     <audio className="w-full" controls src={submission.audio_url} />
                     <a
-                      href={`${blinkOrigin}/api/actions/submissions/${submission.id}/tip`}
+                      href={`${blinkOrigin}/tip/${submission.id}`}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"

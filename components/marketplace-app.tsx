@@ -13,6 +13,7 @@ import {
   FileAudio2,
   Filter,
   Headphones,
+  ImageIcon,
   ListChecks,
   Loader2,
   Mic,
@@ -99,7 +100,8 @@ const initialBountyForm = {
   genre: "Fiction",
   reward_sol: "0.15",
   excerpt: "",
-  author_wallet: ""
+  author_wallet: "",
+  cover_art: "/covers/red-library.svg"
 };
 
 const initialSubmissionForm = {
@@ -122,7 +124,21 @@ const demoSteps = [
 ];
 
 const MAX_AUDIO_MB = 15;
+const MAX_COVER_MB = 6;
 const REVIEW_STORAGE_KEY = "project-vox-review-v1";
+const coverPresets = [
+  { label: "Red Library", value: "/covers/red-library.svg" },
+  { label: "River Manual", value: "/covers/river-manual.svg" },
+  { label: "Orchid Clock", value: "/covers/orchid-clock.svg" }
+];
+const demoWallets = [
+  "27xPuyRbcFD3YGX4JecRXE2MuW8kun15FtzBAJx76q5H",
+  "FYhr49FyCAiy2tGowfyLGNa3rEmFqMYgdRdyqbhRvASi",
+  "3jKebd6QL5xZjBrgP14AhFSGhSfDA99wVYsrvyA7zdjC",
+  "4rjeS3XyPcW6PdRk3ukucQK5wwbwhYwAS8Vz9qVhiEPF",
+  "Ah7Eq3PHrn6VZCLm8zwTddj2r2DPwF51KjMpByAWFjgZ",
+  "22STsegs6245N3C44KVRawQx3Z1edYSxq4sksx3dZ3Eq"
+];
 const defaultBoardFilters: BoardFilters = {
   query: "",
   genre: "all",
@@ -167,7 +183,8 @@ const bountyTemplate = {
   reward_sol: "0.21",
   excerpt:
     "The train arrived without a whistle, carrying three passengers and a conductor who cast no shadow. Elias checked his ticket twice; the destination had changed to a city he had only dreamed.",
-  author_wallet: ""
+  author_wallet: "",
+  cover_art: "/covers/orchid-clock.svg"
 };
 const submissionTemplate = {
   narrator_name: "Nova Vale",
@@ -181,6 +198,8 @@ export function MarketplaceApp() {
   const [state, setState] = useState<MarketplaceState | null>(null);
   const [selectedBountyId, setSelectedBountyId] = useState<string>("");
   const [bountyForm, setBountyForm] = useState(initialBountyForm);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState("");
   const [submissionForm, setSubmissionForm] = useState(initialSubmissionForm);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioPreview, setAudioPreview] = useState<string>("");
@@ -241,6 +260,18 @@ export function MarketplaceApp() {
       URL.revokeObjectURL(url);
     };
   }, [audioFile]);
+
+  useEffect(() => {
+    if (!coverFile) {
+      setCoverPreview("");
+      return;
+    }
+
+    const url = URL.createObjectURL(coverFile);
+    setCoverPreview(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [coverFile]);
 
   useEffect(() => {
     if (!recording || !recordingStartedAt) {
@@ -359,9 +390,11 @@ export function MarketplaceApp() {
         excerpt: bountyForm.excerpt.trim(),
         genre: bountyForm.genre.trim() || "Fiction",
         reward_sol: Number(bountyForm.reward_sol),
-        author_wallet: bountyForm.author_wallet.trim() || publicKey?.toBase58() || ""
-      });
+        author_wallet: bountyForm.author_wallet.trim() || publicKey?.toBase58() || "",
+        cover_art: bountyForm.cover_art
+      }, coverFile);
       setBountyForm(initialBountyForm);
+      setCoverFile(null);
       await refreshState();
       setSelectedBountyId(bounty.id);
       setToast({ tone: "success", message: "Bounty posted." });
@@ -391,12 +424,42 @@ export function MarketplaceApp() {
     setAudioFile(file);
   }
 
+  function handleCoverSelected(file: File | null) {
+    if (!file) {
+      setCoverFile(null);
+      return;
+    }
+
+    if (!isImageFile(file)) {
+      setToast({ tone: "error", message: "Choose a cover image: PNG, JPG, WebP, GIF, or SVG." });
+      return;
+    }
+
+    if (file.size > MAX_COVER_MB * 1024 * 1024) {
+      setToast({ tone: "error", message: `Keep cover images under ${MAX_COVER_MB} MB for the demo.` });
+      return;
+    }
+
+    setCoverFile(file);
+  }
+
   function handleFillBountyTemplate() {
     setBountyForm({
       ...bountyTemplate,
       author_wallet: bountyForm.author_wallet || publicKey?.toBase58() || ""
     });
+    setCoverFile(null);
     setToast({ tone: "info", message: "Bounty template loaded. You can edit it before posting." });
+  }
+
+  function fillDemoWallet(target: "author" | "narrator") {
+    const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
+    if (target === "author") {
+      setBountyForm((current) => ({ ...current, author_wallet: wallet }));
+    } else {
+      setSubmissionForm((current) => ({ ...current, narrator_wallet: wallet }));
+    }
+    setToast({ tone: "info", message: `Demo ${target} wallet added. Use your own wallet for spendable devnet funds.` });
   }
 
   async function handleUseDemoAudition() {
@@ -867,11 +930,32 @@ export function MarketplaceApp() {
                   />
                 </div>
                 <TextArea label="Excerpt" value={bountyForm.excerpt} onChange={(value) => setBountyForm((current) => ({ ...current, excerpt: value }))} />
-                <TextInput
-                  label="Author wallet"
-                  value={bountyForm.author_wallet}
-                  onChange={(value) => setBountyForm((current) => ({ ...current, author_wallet: value }))}
+                <BountyCoverControl
+                  selectedCover={bountyForm.cover_art}
+                  preview={coverPreview || bountyForm.cover_art}
+                  hasUpload={Boolean(coverFile)}
+                  onPreset={(value) => {
+                    setCoverFile(null);
+                    setBountyForm((current) => ({ ...current, cover_art: value }));
+                  }}
+                  onUpload={handleCoverSelected}
+                  onClearUpload={() => setCoverFile(null)}
                 />
+                <div>
+                  <TextInput
+                    label="Author wallet"
+                    value={bountyForm.author_wallet}
+                    onChange={(value) => setBountyForm((current) => ({ ...current, author_wallet: value }))}
+                  />
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white"
+                    onClick={() => fillDemoWallet("author")}
+                  >
+                    <Wand2 className="h-3.5 w-3.5" />
+                    Use demo wallet
+                  </button>
+                </div>
                 <Button disabled={pendingAction === "create-bounty"} icon={<Plus className="h-4 w-4" />} type="submit">
                   Post bounty
                 </Button>
@@ -928,6 +1012,14 @@ export function MarketplaceApp() {
                     value={submissionForm.narrator_wallet}
                     onChange={(value) => setSubmissionForm((current) => ({ ...current, narrator_wallet: value }))}
                   />
+                  <button
+                    type="button"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 self-end rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white sm:col-start-2"
+                    onClick={() => fillDemoWallet("narrator")}
+                  >
+                    <Wand2 className="h-3.5 w-3.5" />
+                    Demo narrator wallet
+                  </button>
                   <div className="sm:col-span-2">
                     <TextArea
                       label="Direction note"
@@ -1065,6 +1157,74 @@ function BoardControls({
         >
           Clear
         </button>
+      </div>
+    </div>
+  );
+}
+
+function BountyCoverControl({
+  selectedCover,
+  preview,
+  hasUpload,
+  onPreset,
+  onUpload,
+  onClearUpload
+}: {
+  selectedCover: string;
+  preview: string;
+  hasUpload: boolean;
+  onPreset: (value: string) => void;
+  onUpload: (file: File | null) => void;
+  onClearUpload: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-ink/10 bg-paper/70 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-ink/50">
+          <ImageIcon className="h-4 w-4 text-clay" />
+          Book cover
+        </span>
+        {hasUpload ? (
+          <button type="button" className="text-xs font-black text-clay transition hover:text-ink" onClick={onClearUpload}>
+            Use preset
+          </button>
+        ) : null}
+      </div>
+      <div className="mt-3 grid grid-cols-[76px_minmax(0,1fr)] gap-3">
+        <div
+          className="h-24 rounded-lg border border-ink/10 bg-cover bg-center shadow-line"
+          style={{ backgroundImage: `url("${preview || "/covers/river-manual.svg"}")` }}
+          aria-hidden="true"
+        />
+        <div className="min-w-0">
+          <div className="grid grid-cols-3 gap-2">
+            {coverPresets.map((cover) => (
+              <button
+                key={cover.value}
+                type="button"
+                className={`h-14 rounded-lg border bg-cover bg-center transition ${
+                  !hasUpload && selectedCover === cover.value ? "border-ink ring-2 ring-clay/30" : "border-ink/10 hover:border-ink/30"
+                }`}
+                style={{ backgroundImage: `url("${cover.value}")` }}
+                aria-label={`Use ${cover.label} cover`}
+                onClick={() => onPreset(cover.value)}
+              />
+            ))}
+          </div>
+          <label className="mt-2 flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-ink/30 bg-white px-3 text-xs font-black text-ink/70 transition hover:border-ink">
+            <Upload className="h-3.5 w-3.5" />
+            Upload cover
+            <input
+              className="sr-only"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              onChange={(event) => {
+                onUpload(event.currentTarget.files?.[0] || null);
+                event.currentTarget.value = "";
+              }}
+            />
+          </label>
+        </div>
       </div>
     </div>
   );
@@ -2069,6 +2229,14 @@ function isAudioFile(file: File) {
   }
 
   return /\.(aac|aif|aiff|flac|m4a|mp3|oga|ogg|opus|wav|webm)$/i.test(file.name);
+}
+
+function isImageFile(file: File) {
+  if (file.type.startsWith("image/")) {
+    return true;
+  }
+
+  return /\.(gif|jpe?g|png|svg|webp)$/i.test(file.name);
 }
 
 function formatAudioSize(sizeMb: number) {

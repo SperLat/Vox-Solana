@@ -45,7 +45,7 @@ export type MarketplaceState = {
   payments: Payment[];
 };
 
-export type NewBountyInput = Pick<Bounty, "title" | "excerpt" | "genre" | "reward_sol" | "author_wallet">;
+export type NewBountyInput = Pick<Bounty, "title" | "excerpt" | "genre" | "reward_sol" | "author_wallet" | "cover_art">;
 
 export type NewSubmissionInput = Pick<Submission, "bounty_id" | "narrator_name" | "narrator_wallet" | "note">;
 

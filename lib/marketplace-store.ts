@@ -86,12 +86,14 @@ export async function loadMarketplaceState(): Promise<MarketplaceState> {
   });
 }
 
-export async function createBounty(input: NewBountyInput): Promise<Bounty> {
+export async function createBounty(input: NewBountyInput, coverFile?: File | null): Promise<Bounty> {
+  const id = crypto.randomUUID();
+  const coverArt = coverFile ? await uploadBountyCover(coverFile, id) : input.cover_art || "/covers/river-manual.svg";
   const bounty: Bounty = {
-    id: crypto.randomUUID(),
+    id,
     ...input,
     status: "open",
-    cover_art: "/covers/river-manual.svg",
+    cover_art: coverArt,
     created_at: new Date().toISOString()
   };
 
@@ -107,6 +109,29 @@ export async function createBounty(input: NewBountyInput): Promise<Bounty> {
   }
 
   return data as Bounty;
+}
+
+async function uploadBountyCover(file: File, bountyId: string) {
+  const supabase = getBrowserSupabase();
+  if (!supabase) {
+    return fileToDataUrl(file);
+  }
+
+  const extension = file.name.split(".").pop() || "png";
+  const safeName = file.name.replace(/[^a-z0-9.\-_]/gi, "-").toLowerCase();
+  const path = `covers/${bountyId}/${safeName || `cover.${extension}`}`;
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    contentType: file.type || "image/png",
+    upsert: true
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
 }
 
 async function uploadAudio(file: File, submissionId: string) {

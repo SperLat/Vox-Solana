@@ -1897,10 +1897,11 @@ function BountyDetail({
   return (
     <Panel id="bounty-detail" className="scroll-mt-5 overflow-hidden p-0">
       <div className="grid gap-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-        <div className="bg-ink p-5">
+        <div className="bg-ink p-5 text-paper">
           <div className="relative mx-auto aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-lg border border-paper/10 bg-paper/5 shadow-soft">
             <Image src={bounty.cover_art || "/covers/river-manual.svg"} alt={`${bounty.title} cover art`} fill className="object-cover" priority />
           </div>
+          <BountySnapshot bounty={bounty} submissions={submissions} canManage={canManageBounty} />
         </div>
         <div className="p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -2245,6 +2246,50 @@ function ScoreControl({ label, value, disabled, onChange }: { label: string; val
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function BountySnapshot({ bounty, submissions, canManage }: { bounty: Bounty; submissions: Submission[]; canManage: boolean }) {
+  const selectedCount = submissions.filter((submission) => submission.selected).length;
+
+  return (
+    <div className="mt-5 grid gap-3">
+      <div className="rounded-lg border border-paper/10 bg-paper/[0.08] p-3">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-paper/45">Bounty snapshot</p>
+        <dl className="mt-3 grid gap-2">
+          <SnapshotRow label="Status" value={bounty.status} />
+          <SnapshotRow label="Audition award" value={`${bounty.reward_sol.toFixed(2)} SOL`} />
+          <SnapshotRow label="Full budget" value={formatOptionalSol(bounty.full_project_budget_sol)} />
+          <SnapshotRow label="Auditions" value={`${submissions.length} submitted`} />
+          <SnapshotRow label="Selected" value={`${selectedCount}`} />
+        </dl>
+      </div>
+
+      <div className="rounded-lg border border-paper/10 bg-paper/[0.08] p-3">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-paper/45">Author wallet</p>
+        <p className="mt-2 break-all text-xs font-bold leading-5 text-paper/65">{truncateWallet(bounty.author_wallet)}</p>
+        <p className="mt-3 rounded-md bg-paper/10 px-2 py-2 text-xs font-bold leading-5 text-paper/65">
+          {canManage ? "Connected as author. Review and payout controls are unlocked." : "Connect this wallet to select, pay, and verify."}
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-paper/10 bg-paper/[0.08] p-3">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-paper/45">Payment model</p>
+        <p className="mt-2 text-xs font-bold leading-5 text-paper/65">
+          Direct devnet SOL transfer. No escrow in this MVP.
+        </p>
+        <p className="mt-2 text-xs font-bold leading-5 text-paper/50">Paid only after the receipt verifier confirms recipient, amount, and memo.</p>
+      </div>
+    </div>
+  );
+}
+
+function SnapshotRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-t border-paper/10 pt-2 first:border-t-0 first:pt-0">
+      <dt className="text-[11px] font-black uppercase tracking-[0.12em] text-paper/40">{label}</dt>
+      <dd className="text-right text-xs font-black text-paper/85">{value}</dd>
     </div>
   );
 }
@@ -2973,6 +3018,10 @@ function receiptStepClass(state: string) {
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
+    if (/invalid compact jws/i.test(error.message)) {
+      return "Supabase rejected the configured API key. Check NEXT_PUBLIC_SUPABASE_ANON_KEY in Coolify: it must be the exact anon/public key, with no quotes, spaces, or placeholder text.";
+    }
+
     return error.message;
   }
 

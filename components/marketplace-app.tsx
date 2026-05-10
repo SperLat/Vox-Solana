@@ -2489,13 +2489,19 @@ function WalletControls() {
 
   if (connected) {
     return (
-      <button
-        className="inline-flex h-10 items-center gap-2 rounded-lg bg-ink px-3 text-sm font-black text-paper transition hover:bg-ink/90"
-        onClick={() => void runWalletAction("disconnect")}
-      >
-        {pendingWallet === "disconnect" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-        {walletName} {publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : ""}
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex h-10 items-center gap-2 rounded-lg border border-sage/20 bg-sage/10 px-3 text-sm font-black text-sage">
+          <Wallet className="h-4 w-4" />
+          {walletName ? walletLabel(walletName) : "Wallet"} {publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : ""}
+        </div>
+        <button
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+          onClick={() => void runWalletAction("disconnect")}
+        >
+          {pendingWallet === "disconnect" ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+          Log out
+        </button>
+      </div>
     );
   }
 
@@ -2532,6 +2538,18 @@ function WalletControls() {
       ) : null}
     </div>
   );
+}
+
+function walletLabel(walletName: string) {
+  if (walletName === "phantom") {
+    return "Phantom";
+  }
+
+  if (walletName === "solflare") {
+    return "Solflare";
+  }
+
+  return walletName;
 }
 
 function SmallBadge({ icon, label }: { icon: ReactNode; label: string }) {

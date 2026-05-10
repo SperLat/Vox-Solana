@@ -1891,18 +1891,23 @@ function BountyDetail({
       return (reviewAverage(reviews[b.id]) || 0) - (reviewAverage(reviews[a.id]) || 0);
     });
   }, [reviews, submissions]);
-  const blinkSubmission = orderedSubmissions.find((submission) => submission.selected) || orderedSubmissions[0] || null;
+  const defaultShareSubmission = orderedSubmissions.find((submission) => submission.selected) || orderedSubmissions[0] || null;
   const authorActionMessage = connected
     ? "Only the bounty author wallet can grade, select, verify, or pay this award."
     : "Connect the bounty author wallet to grade, select, verify, or pay this award.";
-  const defaultExpandedSubmissionId = blinkSubmission?.id || "";
+  const defaultExpandedSubmissionId = defaultShareSubmission?.id || "";
   const [expandedSubmissionIds, setExpandedSubmissionIds] = useState<Set<string>>(new Set());
+  const [activeShareSubmissionId, setActiveShareSubmissionId] = useState("");
+  const activeShareSubmission =
+    orderedSubmissions.find((submission) => submission.id === activeShareSubmissionId) || defaultShareSubmission;
 
   useEffect(() => {
     setExpandedSubmissionIds(defaultExpandedSubmissionId ? new Set([defaultExpandedSubmissionId]) : new Set());
+    setActiveShareSubmissionId(defaultExpandedSubmissionId);
   }, [bounty.id, defaultExpandedSubmissionId]);
 
   function toggleSubmissionExpanded(submissionId: string) {
+    setActiveShareSubmissionId(submissionId);
     setExpandedSubmissionIds((current) => {
       const next = new Set(current);
       if (next.has(submissionId)) {
@@ -1913,6 +1918,11 @@ function BountyDetail({
 
       return next;
     });
+  }
+
+  function handleShareTipLink(submissionId: string) {
+    setActiveShareSubmissionId(submissionId);
+    onCopyBlink(submissionId);
   }
 
   return (
@@ -2005,7 +2015,7 @@ function BountyDetail({
                           label="Pay award"
                           onClick={() => onPay(submission, bounty)}
                         />
-                        <IconButton icon={<Clipboard className="h-4 w-4" />} label="Share tip link" onClick={() => onCopyBlink(submission.id)} />
+                        <IconButton icon={<Clipboard className="h-4 w-4" />} label="Share tip link" onClick={() => handleShareTipLink(submission.id)} />
                       </div>
                     </div>
 
@@ -2043,8 +2053,8 @@ function BountyDetail({
             )}
           </div>
 
-          {blinkSubmission ? (
-            <TipActionPreviewPanel bounty={bounty} submission={blinkSubmission} blinkOrigin={blinkOrigin} onCopyBlink={onCopyBlink} />
+          {activeShareSubmission ? (
+            <TipActionPreviewPanel bounty={bounty} submission={activeShareSubmission} blinkOrigin={blinkOrigin} onCopyBlink={handleShareTipLink} />
           ) : null}
 
           <ManualReceiptVerifierPanel
@@ -2356,12 +2366,13 @@ function TipActionPreviewPanel({
   const actionUrl = `${blinkOrigin}/api/actions/submissions/${submission.id}/tip`;
 
   return (
-    <div className="mt-6 rounded-lg border border-vox/20 bg-vox/10 p-4">
+    <div className="mt-6 rounded-lg border border-vox/20 bg-vox/10 p-4" data-submission-id={submission.id} data-testid="tip-share-panel">
       <div className="grid gap-4">
         <div className="min-w-0 max-w-3xl">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Sparkles className="h-4 w-4 shrink-0 text-vox" />
             <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Shareable tip link</h3>
+            <span className="rounded-md bg-white px-2 py-1 text-xs font-black text-ink/55">{submission.narrator_name}</span>
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-ink/65">
             Share this public page for tipping {submission.narrator_name}. It includes cover art, audio playback, and the Solana Action URL for supported clients.

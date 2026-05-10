@@ -1,10 +1,11 @@
 import { TipShareActions } from "@/components/tip-share-actions";
-import { getActionSubmissionInfo } from "@/lib/action-lookups";
+import { ActionLookupError, getActionSubmissionInfo } from "@/lib/action-lookups";
 import { paymentMemo } from "@/lib/constants";
 import { ArrowLeft, Headphones, ReceiptText, Sparkles, Wallet } from "lucide-react";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 type PageProps = {
@@ -15,7 +16,7 @@ type PageProps = {
 
 export default async function TipPage({ params }: PageProps) {
   const { id } = await params;
-  const { bounty, submission } = await getActionSubmissionInfo(id);
+  const { bounty, submission } = await loadSharePageInfo(id);
   const origin = await getPublicOrigin();
   const shareUrl = `${origin}/tip/${id}`;
   const actionUrl = `${origin}/api/actions/submissions/${id}/tip`;
@@ -91,6 +92,18 @@ export default async function TipPage({ params }: PageProps) {
       </div>
     </main>
   );
+}
+
+async function loadSharePageInfo(id: string) {
+  try {
+    return await getActionSubmissionInfo(id);
+  } catch (error) {
+    if (error instanceof ActionLookupError && error.status === 404) {
+      notFound();
+    }
+
+    throw error;
+  }
 }
 
 function TipMetric({ label, value }: { label: string; value: string }) {

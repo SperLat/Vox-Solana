@@ -1,5 +1,5 @@
 import { LAMPORTS_PER_SOL_NUMBER, MEMO_PROGRAM_ID, paymentMemo } from "@/lib/constants";
-import { getActionSubmissionInfo } from "@/lib/action-lookups";
+import { ActionLookupError, getActionSubmissionInfo, type ActionSubmissionInfo } from "@/lib/action-lookups";
 import { clusterApiUrl, Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import { NextResponse } from "next/server";
@@ -45,7 +45,13 @@ function getPublicOrigin(request: Request) {
 
 export async function GET(request: Request, { params }: Params) {
   const { id } = await params;
-  const { bounty, submission } = await getActionSubmissionInfo(id);
+  let info: ActionSubmissionInfo;
+  try {
+    info = await getActionSubmissionInfo(id);
+  } catch (error) {
+    return actionLookupErrorResponse(error);
+  }
+  const { bounty, submission } = info;
   const origin = getPublicOrigin(request);
   const icon = absoluteUrl(bounty.cover_art || "/action-icon.svg", origin);
 
@@ -105,7 +111,13 @@ export async function POST(request: Request, { params }: Params) {
   } catch {
     return NextResponse.json({ error: "Invalid account" }, { status: 400, headers: ACTIONS_HEADERS });
   }
-  const { bounty, submission } = await getActionSubmissionInfo(id);
+  let info: ActionSubmissionInfo;
+  try {
+    info = await getActionSubmissionInfo(id);
+  } catch (error) {
+    return actionLookupErrorResponse(error);
+  }
+  const { bounty, submission } = info;
   let recipient: PublicKey;
   try {
     recipient = new PublicKey(submission.narrator_wallet);
@@ -156,4 +168,12 @@ export async function POST(request: Request, { params }: Params) {
     },
     { headers: ACTIONS_HEADERS }
   );
+}
+
+function actionLookupErrorResponse(error: unknown) {
+  if (error instanceof ActionLookupError) {
+    return NextResponse.json({ error: error.message }, { status: error.status, headers: ACTIONS_HEADERS });
+  }
+
+  throw error;
 }

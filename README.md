@@ -44,6 +44,10 @@ If Supabase variables are empty, the app runs from browser-local demo state so t
 
 For a fully functional deployed product path, configure `SUPABASE_SERVICE_ROLE_KEY`. The verifier route uses the service key to store receipts after checking the devnet transaction; the browser should not be trusted to mark payments paid.
 
+## Identity Model
+
+Project Vox is wallet-first. Browsing and listening are public. Creating bounties, submitting auditions, saving profiles, grading/shortlisting/selecting auditions, and paying audition awards require a connected Phantom or Solflare wallet. Author-only controls are locked to the wallet that created the bounty.
+
 `SUPABASE_SERVER_URL` is optional. Use it only when the server container should reach a self-hosted Supabase endpoint internally while browsers use `NEXT_PUBLIC_SUPABASE_URL`.
 
 `NEXT_PUBLIC_APP_URL` is optional locally, but set it in production to the public app origin, for example `https://vox.sperlat.dev`. Solana Action metadata uses it for absolute Blink URLs behind reverse proxies.

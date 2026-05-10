@@ -33,6 +33,7 @@ Project Vox is licensed under `AGPL-3.0-only` with the full license text include
 - Server verifier checks recipient, amount, and memo from the devnet transaction, then stores the receipt through the Supabase service key.
 - Solana Actions endpoint returns metadata and a base64 transaction for tipping.
 - No custom program or escrow in this MVP.
+- Wallet ownership gates product actions: only the author wallet can grade, select, verify, or pay that bounty's award.
 
 ## Demo Checklist
 

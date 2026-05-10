@@ -190,14 +190,6 @@ const coverPresets = [
   { label: "River Manual", value: "/covers/river-manual.svg" },
   { label: "Orchid Clock", value: "/covers/orchid-clock.svg" }
 ];
-const demoWallets = [
-  "27xPuyRbcFD3YGX4JecRXE2MuW8kun15FtzBAJx76q5H",
-  "FYhr49FyCAiy2tGowfyLGNa3rEmFqMYgdRdyqbhRvASi",
-  "3jKebd6QL5xZjBrgP14AhFSGhSfDA99wVYsrvyA7zdjC",
-  "4rjeS3XyPcW6PdRk3ukucQK5wwbwhYwAS8Vz9qVhiEPF",
-  "Ah7Eq3PHrn6VZCLm8zwTddj2r2DPwF51KjMpByAWFjgZ",
-  "22STsegs6245N3C44KVRawQx3Z1edYSxq4sksx3dZ3Eq"
-];
 const defaultBoardFilters: BoardFilters = {
   query: "",
   genre: "all",
@@ -446,7 +438,13 @@ export function MarketplaceApp() {
     return { bounties, submissions, volume };
   }, [state]);
   const narratorProfiles = useMemo(() => buildNarratorProfiles(state, reviewState), [reviewState, state]);
-  const accountWorkspace = useMemo(() => buildAccountWorkspace(state, publicKey?.toBase58() || ""), [publicKey, state]);
+  const connectedWallet = publicKey?.toBase58() || "";
+  const accountWorkspace = useMemo(() => buildAccountWorkspace(state, connectedWallet), [connectedWallet, state]);
+  const canManageSelectedBounty = isBountyAuthor(selectedBounty, connectedWallet);
+
+  function canManageBounty(bounty: Bounty | null | undefined) {
+    return isBountyAuthor(bounty, connectedWallet);
+  }
 
   async function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -476,6 +474,11 @@ export function MarketplaceApp() {
 
   async function handleCreateBounty(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!publicKey) {
+      setToast({ tone: "error", message: "Connect a wallet before posting a bounty." });
+      return;
+    }
 
     if (!bountyForm.title.trim() || !bountyForm.excerpt.trim()) {
       setToast({ tone: "error", message: "Add a title and excerpt before posting." });
@@ -508,7 +511,7 @@ export function MarketplaceApp() {
         genre: bountyForm.genre.trim() || "Fiction",
         reward_sol: auditionAwardSol,
         full_project_budget_sol: fullProjectBudgetSol,
-        author_wallet: bountyForm.author_wallet.trim() || publicKey?.toBase58() || "",
+        author_wallet: publicKey.toBase58(),
         cover_art: bountyForm.cover_art
       }, coverFile);
       setBountyForm(initialBountyForm);
@@ -570,16 +573,6 @@ export function MarketplaceApp() {
     setToast({ tone: "info", message: "Bounty template loaded. You can edit it before posting." });
   }
 
-  function fillDemoWallet(target: "author" | "narrator") {
-    const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
-    if (target === "author") {
-      setBountyForm((current) => ({ ...current, author_wallet: wallet }));
-    } else {
-      setSubmissionForm((current) => ({ ...current, narrator_wallet: wallet }));
-    }
-    setToast({ tone: "info", message: `Demo ${target} wallet added. Use your own wallet for spendable devnet funds.` });
-  }
-
   async function handleUseDemoAudition() {
     setPendingAction("demo-audio");
     try {
@@ -601,7 +594,7 @@ export function MarketplaceApp() {
   async function handleFillSubmissionTemplate() {
     setSubmissionForm({
       ...submissionTemplate,
-      narrator_wallet: submissionForm.narrator_wallet || process.env.NEXT_PUBLIC_DEMO_RECIPIENT_WALLET || publicKey?.toBase58() || ""
+      narrator_wallet: publicKey?.toBase58() || ""
     });
 
     if (!audioFile) {
@@ -615,13 +608,13 @@ export function MarketplaceApp() {
   async function handleCreateSubmission(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!selectedBounty || !audioFile) {
-      setToast({ tone: "error", message: "Choose or record an audio audition first." });
+    if (!publicKey) {
+      setToast({ tone: "error", message: "Connect a wallet before submitting an audition." });
       return;
     }
 
-    if (!submissionForm.narrator_wallet.trim() && !publicKey) {
-      setToast({ tone: "error", message: "Add the narrator wallet or connect one first." });
+    if (!selectedBounty || !audioFile) {
+      setToast({ tone: "error", message: "Choose or record an audio audition first." });
       return;
     }
 
@@ -630,8 +623,8 @@ export function MarketplaceApp() {
       await createSubmission(
         {
           bounty_id: selectedBounty.id,
-          narrator_name: submissionForm.narrator_name.trim() || "Anonymous narrator",
-          narrator_wallet: submissionForm.narrator_wallet.trim() || publicKey?.toBase58() || "",
+          narrator_name: submissionForm.narrator_name.trim() || accountWorkspace.profile?.display_name || "Anonymous narrator",
+          narrator_wallet: publicKey.toBase58(),
           note: submissionForm.note.trim()
         },
         audioFile
@@ -648,6 +641,13 @@ export function MarketplaceApp() {
   }
 
   function updateReview(submissionId: string, patch: Partial<SubmissionReview>) {
+    const submission = state?.submissions.find((item) => item.id === submissionId);
+    const bounty = submission ? state?.bounties.find((item) => item.id === submission.bounty_id) : null;
+    if (!canManageBounty(bounty)) {
+      setToast({ tone: "error", message: "Only the bounty author wallet can grade or shortlist auditions." });
+      return;
+    }
+
     setReviewState((current) => {
       const next = {
         ...current,
@@ -663,6 +663,12 @@ export function MarketplaceApp() {
   }
 
   async function handleSelectSubmission(submission: Submission) {
+    const bounty = state?.bounties.find((item) => item.id === submission.bounty_id) || null;
+    if (!canManageBounty(bounty)) {
+      setToast({ tone: "error", message: "Only the bounty author wallet can select a narrator." });
+      return;
+    }
+
     setPendingAction(`select-${submission.id}`);
     try {
       await markSubmissionSelected(submission.id, submission.bounty_id);
@@ -678,6 +684,11 @@ export function MarketplaceApp() {
   async function handlePaySubmission(submission: Submission, bounty: Bounty) {
     if (!publicKey) {
       setToast({ tone: "error", message: "Connect a devnet wallet before paying." });
+      return;
+    }
+
+    if (!canManageBounty(bounty)) {
+      setToast({ tone: "error", message: "Only the bounty author wallet can pay the audition award." });
       return;
     }
 
@@ -793,6 +804,13 @@ export function MarketplaceApp() {
   }
 
   async function handleRetryVerification(payment: Payment) {
+    const bounty = state?.bounties.find((item) => item.id === payment.bounty_id) || null;
+    const wallet = publicKey?.toBase58() || "";
+    if (!wallet || (payment.payer_wallet !== wallet && payment.recipient_wallet !== wallet && !isBountyAuthor(bounty, wallet))) {
+      setToast({ tone: "error", message: "Connect as the payer, recipient, or bounty author to retry this receipt." });
+      return;
+    }
+
     setPendingAction(`verify-${payment.id}`);
     try {
       const verification = await verifyPayment({
@@ -821,6 +839,11 @@ export function MarketplaceApp() {
 
     if (!selectedBounty) {
       setToast({ tone: "error", message: "Select a bounty before verifying a receipt." });
+      return;
+    }
+
+    if (!canManageBounty(selectedBounty)) {
+      setToast({ tone: "error", message: "Only the bounty author wallet can manually verify award receipts." });
       return;
     }
 
@@ -1111,21 +1134,7 @@ export function MarketplaceApp() {
                   onClearUpload={() => setCoverFile(null)}
                 />
                 <div>
-                  <TextInput
-                    label="Author wallet"
-                    value={bountyForm.author_wallet}
-                    onChange={(value) => setBountyForm((current) => ({ ...current, author_wallet: value }))}
-                  />
-                  {demoMode ? (
-                    <button
-                      type="button"
-                      className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white"
-                      onClick={() => fillDemoWallet("author")}
-                    >
-                      <Wand2 className="h-3.5 w-3.5" />
-                      Use demo wallet
-                    </button>
-                  ) : null}
+                  <ConnectedWalletField label="Author wallet" wallet={connectedWallet} empty="Connect wallet to post bounties." />
                 </div>
                 <Button disabled={pendingAction === "create-bounty"} icon={<Plus className="h-4 w-4" />} type="submit">
                   Post bounty
@@ -1146,6 +1155,7 @@ export function MarketplaceApp() {
                 paymentStatusBySubmission={paymentStatusBySubmission}
                 pendingAction={pendingAction}
                 connected={connected}
+                canManageBounty={canManageSelectedBounty}
                 blinkOrigin={blinkOrigin}
                 reviews={reviewState}
                 manualVerifyForm={manualVerifyForm}
@@ -1180,19 +1190,10 @@ export function MarketplaceApp() {
                   />
                   <TextInput
                     label="Narrator wallet"
-                    value={submissionForm.narrator_wallet}
-                    onChange={(value) => setSubmissionForm((current) => ({ ...current, narrator_wallet: value }))}
+                    value={connectedWallet || "Connect wallet to submit"}
+                    onChange={() => undefined}
+                    disabled
                   />
-                  {demoMode ? (
-                    <button
-                      type="button"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 self-end rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white sm:col-start-2"
-                      onClick={() => fillDemoWallet("narrator")}
-                    >
-                      <Wand2 className="h-3.5 w-3.5" />
-                      Demo narrator wallet
-                    </button>
-                  ) : null}
                   <div className="sm:col-span-2">
                     <TextArea
                       label="Direction note"
@@ -1375,6 +1376,17 @@ function WorkflowCard({ icon, title, detail }: { icon: ReactNode; title: string;
         {title}
       </div>
       <p className="mt-2 text-xs font-semibold leading-5 text-ink/55">{detail}</p>
+    </div>
+  );
+}
+
+function ConnectedWalletField({ label, wallet, empty }: { label: string; wallet: string; empty: string }) {
+  return (
+    <div className="block">
+      <span className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">{label}</span>
+      <div className="mt-1 rounded-lg border border-ink/10 bg-paper px-3 py-3 text-sm font-semibold leading-5 text-ink/65">
+        {wallet ? <span className="break-all">{wallet}</span> : <span>{empty}</span>}
+      </div>
     </div>
   );
 }
@@ -1798,6 +1810,7 @@ function BountyDetail({
   paymentStatusBySubmission,
   pendingAction,
   connected,
+  canManageBounty,
   blinkOrigin,
   reviews,
   manualVerifyForm,
@@ -1815,6 +1828,7 @@ function BountyDetail({
   paymentStatusBySubmission: Map<string, PaymentStatus>;
   pendingAction: string;
   connected: boolean;
+  canManageBounty: boolean;
   blinkOrigin: string;
   reviews: ReviewState;
   manualVerifyForm: ManualVerifyForm;
@@ -1842,6 +1856,9 @@ function BountyDetail({
     });
   }, [reviews, submissions]);
   const blinkSubmission = orderedSubmissions.find((submission) => submission.selected) || orderedSubmissions[0] || null;
+  const authorActionMessage = connected
+    ? "Only the bounty author wallet can grade, select, verify, or pay this award."
+    : "Connect the bounty author wallet to grade, select, verify, or pay this award.";
 
   return (
     <Panel id="bounty-detail" className="scroll-mt-5 overflow-hidden p-0">
@@ -1870,7 +1887,12 @@ function BountyDetail({
             </div>
           </div>
 
-          <ReviewWorkspaceSummary submissions={submissions} reviews={reviews} />
+          <ReviewWorkspaceSummary submissions={submissions} reviews={reviews} canManage={canManageBounty} />
+          {!canManageBounty ? (
+            <div className="mt-4 rounded-lg border border-clay/20 bg-clay/10 px-4 py-3 text-sm font-semibold leading-6 text-clay">
+              {authorActionMessage} Browsing, listening, and opening Blinks remain public.
+            </div>
+          ) : null}
 
           <div className="mt-6 flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -1895,13 +1917,13 @@ function BountyDetail({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <IconButton
-                        disabled={pendingAction === `select-${submission.id}`}
+                        disabled={!canManageBounty || pendingAction === `select-${submission.id}`}
                         icon={<BadgeCheck className="h-4 w-4" />}
                         label="Select"
                         onClick={() => onSelect(submission)}
                       />
                       <IconButton
-                        disabled={!connected || pendingAction === `pay-${submission.id}`}
+                        disabled={!canManageBounty || pendingAction === `pay-${submission.id}`}
                         icon={pendingAction === `pay-${submission.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <CircleDollarSign className="h-4 w-4" />}
                         label="Pay award"
                         onClick={() => onPay(submission, bounty)}
@@ -1922,6 +1944,8 @@ function BountyDetail({
                   </div>
                   <SubmissionReviewPanel
                     review={reviews[submission.id] || emptyReview()}
+                    disabled={!canManageBounty}
+                    disabledReason={authorActionMessage}
                     onChange={(patch) => onReviewChange(submission.id, patch)}
                   />
                 </article>
@@ -1944,6 +1968,7 @@ function BountyDetail({
             submissions={orderedSubmissions}
             form={manualVerifyForm}
             pending={pendingAction === "manual-verify"}
+            canManage={canManageBounty}
             onChange={onManualVerifyFormChange}
             onSubmit={onManualVerify}
           />
@@ -1966,7 +1991,7 @@ function BountyDetail({
                       <span className="text-clay">{payment.amount_sol.toFixed(2)} SOL</span>
                       {payment.status !== "verified" ? (
                         <IconButton
-                          disabled={pendingAction === `verify-${payment.id}`}
+                          disabled={!canManageBounty || pendingAction === `verify-${payment.id}`}
                           icon={pendingAction === `verify-${payment.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                           label="Verify"
                           onClick={() => onRetryVerification(payment)}
@@ -2063,7 +2088,7 @@ function WaveformBars({ active = false }: { active?: boolean }) {
   );
 }
 
-function ReviewWorkspaceSummary({ submissions, reviews }: { submissions: Submission[]; reviews: ReviewState }) {
+function ReviewWorkspaceSummary({ submissions, reviews, canManage }: { submissions: Submission[]; reviews: ReviewState; canManage: boolean }) {
   const shortlisted = submissions.filter((submission) => reviews[submission.id]?.shortlisted).length;
   const scored = submissions
     .map((submission) => ({ submission, average: reviewAverage(reviews[submission.id]) }))
@@ -2080,7 +2105,9 @@ function ReviewWorkspaceSummary({ submissions, reviews }: { submissions: Submiss
             <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Audition review workspace</h3>
           </div>
           <p className="mt-2 text-sm font-medium leading-6 text-ink/60">
-            Local scoring helps the author choose before the devnet payment step.
+            {canManage
+              ? "Local scoring helps the author choose before the devnet payment step."
+              : "Review scores are locked until the bounty author wallet is connected."}
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
@@ -2101,9 +2128,13 @@ function ReviewWorkspaceSummary({ submissions, reviews }: { submissions: Submiss
 
 function SubmissionReviewPanel({
   review,
+  disabled,
+  disabledReason,
   onChange
 }: {
   review: SubmissionReview;
+  disabled: boolean;
+  disabledReason: string;
   onChange: (patch: Partial<SubmissionReview>) => void;
 }) {
   const average = reviewAverage(review);
@@ -2117,14 +2148,15 @@ function SubmissionReviewPanel({
             <h5 className="text-xs font-black uppercase tracking-[0.14em] text-ink/50">Author review</h5>
           </div>
           <p className="mt-1 text-sm font-semibold text-ink/60">
-            {average === null ? "Not scored yet" : `${average.toFixed(1)} average score`}
+            {disabled ? disabledReason : average === null ? "Not scored yet" : `${average.toFixed(1)} average score`}
           </p>
         </div>
         <button
           type="button"
+          disabled={disabled}
           className={`inline-flex min-h-9 items-center justify-center gap-2 rounded-lg px-3 text-xs font-black transition ${
             review.shortlisted ? "bg-sage text-paper" : "border border-ink/10 bg-white text-ink/60 hover:border-ink/30 hover:text-ink"
-          }`}
+          } disabled:opacity-50`}
           onClick={() => onChange({ shortlisted: !review.shortlisted })}
         >
           {review.shortlisted ? <Check className="h-4 w-4" /> : <Star className="h-4 w-4" />}
@@ -2137,6 +2169,7 @@ function SubmissionReviewPanel({
             key={criterion.key}
             label={criterion.label}
             value={review[criterion.key]}
+            disabled={disabled}
             onChange={(value) => onChange({ [criterion.key]: value } as Partial<SubmissionReview>)}
           />
         ))}
@@ -2146,13 +2179,14 @@ function SubmissionReviewPanel({
         aria-label="Private local review note"
         placeholder="Private local note for the author"
         value={review.note}
+        disabled={disabled}
         onChange={(event) => onChange({ note: event.currentTarget.value })}
       />
     </div>
   );
 }
 
-function ScoreControl({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
+function ScoreControl({ label, value, disabled, onChange }: { label: string; value: number; disabled: boolean; onChange: (value: number) => void }) {
   return (
     <div className="rounded-lg bg-white px-3 py-2">
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -2167,6 +2201,7 @@ function ScoreControl({ label, value, onChange }: { label: string; value: number
             className={`h-8 rounded-md text-xs font-black transition ${
               score <= value ? "bg-ink text-paper" : "border border-ink/10 bg-paper text-ink/45 hover:border-ink/30 hover:text-ink"
             }`}
+            disabled={disabled}
             aria-label={`${label} ${score}`}
             onClick={() => onChange(score)}
           >
@@ -2226,6 +2261,7 @@ function ManualReceiptVerifierPanel({
   submissions,
   form,
   pending,
+  canManage,
   onChange,
   onSubmit
 }: {
@@ -2233,6 +2269,7 @@ function ManualReceiptVerifierPanel({
   submissions: Submission[];
   form: ManualVerifyForm;
   pending: boolean;
+  canManage: boolean;
   onChange: (patch: Partial<ManualVerifyForm>) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -2245,7 +2282,9 @@ function ManualReceiptVerifierPanel({
         <div>
           <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Manual receipt verifier</h3>
           <p className="mt-2 text-sm font-medium leading-6 text-ink/60">
-            Paste a devnet transaction signature to check recipient, amount, and memo before marking payment status.
+            {canManage
+              ? "Paste a devnet transaction signature to check recipient, amount, and memo before marking payment status."
+              : "Manual verification is locked to the bounty author wallet."}
           </p>
         </div>
       </div>
@@ -2253,6 +2292,7 @@ function ManualReceiptVerifierPanel({
         <SelectInput
           label="Audition"
           value={form.submission_id}
+          disabled={!canManage}
           onChange={(value) => onChange({ submission_id: value })}
           options={
             submissions.length
@@ -2260,7 +2300,7 @@ function ManualReceiptVerifierPanel({
               : [{ label: "No auditions yet", value: "" }]
           }
         />
-        <TextInput label="Devnet tx signature" value={form.tx_signature} onChange={(value) => onChange({ tx_signature: value })} />
+        <TextInput label="Devnet tx signature" value={form.tx_signature} disabled={!canManage} onChange={(value) => onChange({ tx_signature: value })} />
         <Button disabled={pending || !selectedSubmission} icon={<ShieldCheck className="h-4 w-4" />} type="submit">
           Verify
         </Button>
@@ -2573,7 +2613,8 @@ function TextInput({
   onChange,
   type = "text",
   min,
-  step
+  step,
+  disabled = false
 }: {
   label: string;
   value: string;
@@ -2581,16 +2622,18 @@ function TextInput({
   type?: string;
   min?: string;
   step?: string;
+  disabled?: boolean;
 }) {
   return (
     <label className="block">
       <span className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">{label}</span>
       <input
-        className="mt-1 h-11 w-full rounded-lg border border-ink/10 bg-white px-3 text-sm font-semibold outline-none transition placeholder:text-ink/30 focus:border-ink"
+        className="mt-1 h-11 w-full rounded-lg border border-ink/10 bg-white px-3 text-sm font-semibold outline-none transition placeholder:text-ink/30 focus:border-ink disabled:bg-paper disabled:text-ink/45"
         type={type}
         min={min}
         step={step}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.currentTarget.value)}
       />
     </label>
@@ -2601,19 +2644,22 @@ function SelectInput({
   label,
   value,
   options,
-  onChange
+  onChange,
+  disabled = false
 }: {
   label: string;
   value: string;
   options: Array<{ label: string; value: string }>;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="block">
       <span className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">{label}</span>
       <select
-        className="mt-1 h-10 w-full rounded-lg border border-ink/10 bg-white px-2 text-xs font-black text-ink outline-none transition focus:border-ink"
+        className="mt-1 h-10 w-full rounded-lg border border-ink/10 bg-white px-2 text-xs font-black text-ink outline-none transition focus:border-ink disabled:bg-paper disabled:text-ink/45"
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.currentTarget.value)}
       >
         {options.map((option) => (
@@ -2626,13 +2672,14 @@ function SelectInput({
   );
 }
 
-function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function TextArea({ label, value, onChange, disabled = false }: { label: string; value: string; onChange: (value: string) => void; disabled?: boolean }) {
   return (
     <label className="block">
       <span className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">{label}</span>
       <textarea
-        className="mt-1 min-h-24 w-full resize-y rounded-lg border border-ink/10 bg-white px-3 py-3 text-sm font-semibold leading-6 outline-none transition placeholder:text-ink/30 focus:border-ink"
+        className="mt-1 min-h-24 w-full resize-y rounded-lg border border-ink/10 bg-white px-3 py-3 text-sm font-semibold leading-6 outline-none transition placeholder:text-ink/30 focus:border-ink disabled:bg-paper disabled:text-ink/45"
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.currentTarget.value)}
       />
     </label>
@@ -2667,6 +2714,10 @@ function buildAccountWorkspace(state: MarketplaceState | null, wallet: string): 
     verifiedIncomingSol: incomingPayments.reduce((total, payment) => (payment.status === "verified" ? total + payment.amount_sol : total), 0),
     verifiedOutgoingSol: outgoingPayments.reduce((total, payment) => (payment.status === "verified" ? total + payment.amount_sol : total), 0)
   };
+}
+
+function isBountyAuthor(bounty: Bounty | null | undefined, wallet: string) {
+  return Boolean(bounty && wallet && bounty.author_wallet === wallet);
 }
 
 function buildNarratorProfiles(state: MarketplaceState | null, reviews: ReviewState): NarratorProfile[] {

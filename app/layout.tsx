@@ -5,7 +5,7 @@ import { WalletContextProvider } from "@/components/wallet-context-provider";
 
 export const metadata: Metadata = {
   title: "Project Vox",
-  description: "Solana devnet marketplace for audiobook narration bounties."
+  description: "Solana devnet marketplace for paid audiobook audition awards and narration budgets."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

@@ -100,6 +100,7 @@ const initialBountyForm = {
   title: "",
   genre: "Fiction",
   reward_sol: "0.15",
+  full_project_budget_sol: "1.50",
   excerpt: "",
   author_wallet: "",
   cover_art: "/covers/red-library.svg"
@@ -138,7 +139,7 @@ const roleGuides: Record<
     label: "Author",
     icon: <BookOpen className="h-4 w-4" />,
     headline: "Author view",
-    description: "Create a narration bounty, compare auditions, select a narrator, then pay with devnet SOL.",
+    description: "Create a paid audition with a full-book budget, compare takes, select a narrator, then pay with devnet SOL.",
     primaryAction: "Use Post a bounty and the review controls."
   },
   narrator: {
@@ -215,6 +216,7 @@ const bountyTemplate = {
   title: "Night Train to Meridian",
   genre: "Noir fantasy",
   reward_sol: "0.21",
+  full_project_budget_sol: "2.10",
   excerpt:
     "The train arrived without a whistle, carrying three passengers and a conductor who cast no shadow. Elias checked his ticket twice; the destination had changed to a city he had only dreamed.",
   author_wallet: "",
@@ -413,8 +415,21 @@ export function MarketplaceApp() {
       return;
     }
 
-    if (!Number.isFinite(Number(bountyForm.reward_sol)) || Number(bountyForm.reward_sol) <= 0) {
-      setToast({ tone: "error", message: "Reward must be greater than zero." });
+    const auditionAwardSol = Number(bountyForm.reward_sol);
+    const fullProjectBudgetSol = bountyForm.full_project_budget_sol.trim() ? Number(bountyForm.full_project_budget_sol) : null;
+
+    if (!Number.isFinite(auditionAwardSol) || auditionAwardSol <= 0) {
+      setToast({ tone: "error", message: "Audition award must be greater than zero." });
+      return;
+    }
+
+    if (fullProjectBudgetSol !== null && (!Number.isFinite(fullProjectBudgetSol) || fullProjectBudgetSol <= 0)) {
+      setToast({ tone: "error", message: "Full narration budget must be greater than zero or left blank." });
+      return;
+    }
+
+    if (fullProjectBudgetSol !== null && fullProjectBudgetSol <= auditionAwardSol) {
+      setToast({ tone: "error", message: "Full narration budget should be higher than the audition award." });
       return;
     }
 
@@ -424,7 +439,8 @@ export function MarketplaceApp() {
         title: bountyForm.title.trim(),
         excerpt: bountyForm.excerpt.trim(),
         genre: bountyForm.genre.trim() || "Fiction",
-        reward_sol: Number(bountyForm.reward_sol),
+        reward_sol: auditionAwardSol,
+        full_project_budget_sol: fullProjectBudgetSol,
         author_wallet: bountyForm.author_wallet.trim() || publicKey?.toBase58() || "",
         cover_art: bountyForm.cover_art
       }, coverFile);
@@ -651,7 +667,7 @@ export function MarketplaceApp() {
         tone: verification.status === "verified" ? "success" : verification.status === "pending_verification" ? "info" : "error",
         message:
           verification.status === "verified"
-            ? `Payment verified: ${signature.slice(0, 10)}...`
+            ? `Audition award verified: ${signature.slice(0, 10)}...`
             : verification.verification_error || `Payment recorded as ${verification.status}.`
       });
     } catch (error) {
@@ -879,7 +895,7 @@ export function MarketplaceApp() {
                 <div>
                   <h1 className="font-serif text-3xl font-semibold leading-tight">Find a voice for the next chapter.</h1>
                   <p className="mt-2 text-sm leading-6 text-ink/60">
-                    Authors post short excerpts, narrators audition, and Solana receipts prove direct payment.
+                    Authors post paid audition awards with full narration budgets, and Solana receipts prove direct payment.
                   </p>
                 </div>
                 <Image src="/brand-mark.svg" width={76} height={76} alt="" className="hidden shrink-0 sm:block" priority />
@@ -922,11 +938,14 @@ export function MarketplaceApp() {
                           <div className="flex items-center justify-between gap-3">
                             <p className="truncate text-sm font-black">{bounty.title}</p>
                             <span className={`text-xs font-black ${bounty.id === selectedBountyId ? "text-paper/70" : "text-clay"}`}>
-                              {bounty.reward_sol.toFixed(2)} SOL
+                              {bounty.reward_sol.toFixed(2)} SOL audition
                             </span>
                           </div>
                           <p className={`mt-1 text-xs font-semibold ${bounty.id === selectedBountyId ? "text-paper/60" : "text-ink/50"}`}>
                             {bounty.genre} / {bounty.status} / {bountySubmissionCounts.get(bounty.id) || 0} takes
+                          </p>
+                          <p className={`mt-1 text-xs font-bold ${bounty.id === selectedBountyId ? "text-paper/60" : "text-ink/45"}`}>
+                            Full project: {formatOptionalSol(bounty.full_project_budget_sol)}
                           </p>
                         </div>
                       </div>
@@ -959,15 +978,23 @@ export function MarketplaceApp() {
               ) : null}
               <form className={`${demoMode ? "mt-4" : "mt-3"} flex flex-col gap-3`} onSubmit={handleCreateBounty}>
                 <TextInput label="Title" value={bountyForm.title} onChange={(value) => setBountyForm((current) => ({ ...current, title: value }))} />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-3">
                   <TextInput label="Genre" value={bountyForm.genre} onChange={(value) => setBountyForm((current) => ({ ...current, genre: value }))} />
                   <TextInput
-                    label="Reward SOL"
+                    label="Audition award SOL"
                     type="number"
                     min="0.001"
                     step="0.001"
                     value={bountyForm.reward_sol}
                     onChange={(value) => setBountyForm((current) => ({ ...current, reward_sol: value }))}
+                  />
+                  <TextInput
+                    label="Full budget SOL"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    value={bountyForm.full_project_budget_sol}
+                    onChange={(value) => setBountyForm((current) => ({ ...current, full_project_budget_sol: value }))}
                   />
                 </div>
                 <TextArea label="Excerpt" value={bountyForm.excerpt} onChange={(value) => setBountyForm((current) => ({ ...current, excerpt: value }))} />
@@ -1192,8 +1219,8 @@ function BoardControls({
           onChange={(value) => onChange({ sort: value as BoardSort })}
           options={[
             { label: "Newest", value: "newest" },
-            { label: "Highest reward", value: "reward_desc" },
-            { label: "Lowest reward", value: "reward_asc" },
+            { label: "Highest award", value: "reward_desc" },
+            { label: "Lowest award", value: "reward_asc" },
             { label: "Most auditions", value: "most_auditions" }
           ]}
         />
@@ -1421,10 +1448,17 @@ function BountyDetail({
               <p className="text-sm font-black uppercase tracking-[0.16em] text-clay">{bounty.genre}</p>
               <h2 className="mt-2 font-serif text-4xl font-semibold leading-none">{bounty.title}</h2>
               <p className="mt-3 max-w-3xl text-base leading-7 text-ink/70">{bounty.excerpt}</p>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-ink/55">
+                Stage one pays the selected sample. Stage two shows the expected full narration budget for the completed book.
+              </p>
             </div>
-            <div className="rounded-lg border border-ink/10 bg-paper p-4 text-right shadow-line">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-ink/50">Reward</p>
+            <div className="min-w-[190px] rounded-lg border border-ink/10 bg-paper p-4 text-right shadow-line">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-ink/50">Audition award</p>
               <p className="mt-1 font-serif text-3xl font-semibold">{bounty.reward_sol.toFixed(2)} SOL</p>
+              <div className="mt-3 border-t border-ink/10 pt-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-ink/50">Full narration budget</p>
+                <p className="mt-1 text-lg font-black text-clay">{formatOptionalSol(bounty.full_project_budget_sol)}</p>
+              </div>
               <p className="mt-1 text-xs font-bold text-ink/50">{bounty.status}</p>
             </div>
           </div>
@@ -1462,7 +1496,7 @@ function BountyDetail({
                       <IconButton
                         disabled={!connected || pendingAction === `pay-${submission.id}`}
                         icon={pendingAction === `pay-${submission.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <CircleDollarSign className="h-4 w-4" />}
-                        label="Pay"
+                        label="Pay award"
                         onClick={() => onPay(submission, bounty)}
                       />
                       <IconButton icon={<Clipboard className="h-4 w-4" />} label="Blink" onClick={() => onCopyBlink(submission.id)} />
@@ -1759,7 +1793,7 @@ function BlinkPreviewPanel({
             <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Blink preview</h3>
           </div>
           <p className="mt-2 text-sm font-semibold text-ink/65">
-            Shareable tip action for {submission.narrator_name} on {bounty.title}.
+            Shareable tip action for {submission.narrator_name} on {bounty.title}. The full audition award is {bounty.reward_sol.toFixed(2)} SOL.
           </p>
           <p className="mt-2 break-all rounded-lg bg-white px-3 py-2 text-xs font-bold text-ink/55">{actionUrl}</p>
           <p className="mt-2 break-all text-xs font-bold text-ink/45">{paymentMemo(bounty.id, submission.id)}</p>
@@ -1825,7 +1859,7 @@ function ManualReceiptVerifierPanel({
         </Button>
       </form>
       <div className="mt-3 grid gap-2 rounded-lg bg-paper/70 px-3 py-2 text-xs font-bold text-ink/50">
-        <span>Expected amount: {bounty.reward_sol.toFixed(2)} SOL</span>
+        <span>Expected audition award: {bounty.reward_sol.toFixed(2)} SOL</span>
         <span className="break-all">Expected memo: {selectedSubmission ? paymentMemo(bounty.id, selectedSubmission.id) : "Submit an audition first"}</span>
       </div>
     </div>
@@ -2334,6 +2368,15 @@ function isImageFile(file: File) {
 
 function formatAudioSize(sizeMb: number) {
   return `${sizeMb.toFixed(sizeMb >= 10 ? 0 : 1)} MB`;
+}
+
+function formatOptionalSol(value?: number | null) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return "TBD";
+  }
+
+  return `${parsed.toFixed(2)} SOL`;
 }
 
 function formatDuration(seconds: number | null) {

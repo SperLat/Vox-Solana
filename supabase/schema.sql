@@ -6,6 +6,7 @@ create table if not exists public.project_vox_bounties (
   excerpt text not null,
   genre text not null default 'Fiction',
   reward_sol numeric(12, 6) not null check (reward_sol > 0),
+  full_project_budget_sol numeric(12, 6),
   author_wallet text not null,
   status text not null default 'open' check (status in ('open', 'awarded', 'paid')),
   cover_art text,
@@ -38,12 +39,21 @@ create table if not exists public.project_vox_payments (
   created_at timestamptz not null default now()
 );
 
+alter table public.project_vox_bounties add column if not exists full_project_budget_sol numeric(12, 6);
 alter table public.project_vox_payments add column if not exists status text not null default 'pending_verification';
 alter table public.project_vox_payments add column if not exists verified_at timestamptz;
 alter table public.project_vox_payments add column if not exists verification_error text;
 
 do $$
 begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'project_vox_bounties_full_project_budget_check'
+  ) then
+    alter table public.project_vox_bounties
+      add constraint project_vox_bounties_full_project_budget_check
+      check (full_project_budget_sol is null or full_project_budget_sol > 0);
+  end if;
+
   if not exists (
     select 1 from pg_constraint where conname = 'project_vox_payments_status_check'
   ) then

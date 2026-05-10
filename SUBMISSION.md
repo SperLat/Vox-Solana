@@ -6,7 +6,7 @@ Audiobook narration is hard for independent authors to source and pay for. Voice
 
 ## Solution
 
-Project Vox lets authors post narration bounties, narrators upload or record auditions, and authors or fans pay narrators directly with Solana devnet SOL.
+Project Vox lets authors post paid narration auditions with a visible full-book budget, narrators upload or record auditions, and authors or fans pay narrators directly with Solana devnet SOL.
 
 ## Open Source
 
@@ -15,7 +15,7 @@ Project Vox is licensed under `AGPL-3.0-only` with the full license text include
 ## What Works
 
 - Browse seeded or live Supabase bounties.
-- Create a new bounty.
+- Create a new bounty with an audition award and full narration budget.
 - Upload or record an audio audition.
 - Select a narrator for a bounty.
 - Pay a narrator from Phantom or Solflare on devnet.
@@ -27,7 +27,7 @@ Project Vox is licensed under `AGPL-3.0-only` with the full license text include
 ## Solana Usage
 
 - Direct SOL transfers through `@solana/web3.js`.
-- Memo program links each payment to one bounty and one submission.
+- Memo program links each audition-award payment to one bounty and one submission.
 - Server verifier checks recipient, amount, and memo from the devnet transaction, then stores the receipt through the Supabase service key.
 - Solana Actions endpoint returns metadata and a base64 transaction for tipping.
 - No custom program or escrow in this MVP.
@@ -45,6 +45,7 @@ Project Vox is licensed under `AGPL-3.0-only` with the full license text include
 ## Known Limitations
 
 - Payments are direct transfers, not escrow.
+- The full narration budget is shown for marketplace intent; milestone contracts for the full book are not automated yet.
 - Public demo Supabase policies are permissive and should be tightened before production.
 - Server verification depends on devnet RPC availability.
 - Local fallback state is for rehearsal only; full product persistence requires Supabase.

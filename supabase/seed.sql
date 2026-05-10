@@ -1,4 +1,4 @@
-insert into public.project_vox_bounties (id, title, excerpt, genre, reward_sol, author_wallet, status, cover_art)
+insert into public.project_vox_bounties (id, title, excerpt, genre, reward_sol, full_project_budget_sol, author_wallet, status, cover_art)
 values
   (
     'bounty-mars',
@@ -6,6 +6,7 @@ values
     'At the rim of the old crater, Mara found a library sealed in glass. The books inside were not written for human hands, but every page hummed when she spoke.',
     'Speculative fiction',
     0.24,
+    2.40,
     '7p1RKdQbJnW2A4dzJns7cLGtYGbTRTuv7RRv9pZV4nEP',
     'open',
     '/covers/red-library.svg'
@@ -16,11 +17,12 @@ values
     'Rule one: never trust a city that refuses to appear on maps. Rule two: if the river knows your name, answer softly and keep walking.',
     'Adventure',
     0.18,
+    1.80,
     '7p1RKdQbJnW2A4dzJns7cLGtYGbTRTuv7RRv9pZV4nEP',
     'open',
     '/covers/river-manual.svg'
   )
-on conflict (id) do nothing;
+on conflict (id) do update set full_project_budget_sol = excluded.full_project_budget_sol;
 
 insert into public.project_vox_submissions (id, bounty_id, narrator_name, narrator_wallet, audio_url, note, selected)
 values

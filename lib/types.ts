@@ -7,6 +7,7 @@ export type Bounty = {
   excerpt: string;
   genre: string;
   reward_sol: number;
+  full_project_budget_sol?: number | null;
   author_wallet: string;
   status: BountyStatus;
   cover_art?: string | null;
@@ -45,7 +46,10 @@ export type MarketplaceState = {
   payments: Payment[];
 };
 
-export type NewBountyInput = Pick<Bounty, "title" | "excerpt" | "genre" | "reward_sol" | "author_wallet" | "cover_art">;
+export type NewBountyInput = Pick<
+  Bounty,
+  "title" | "excerpt" | "genre" | "reward_sol" | "full_project_budget_sol" | "author_wallet" | "cover_art"
+>;
 
 export type NewSubmissionInput = Pick<Submission, "bounty_id" | "narrator_name" | "narrator_wallet" | "note">;
 

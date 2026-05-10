@@ -6,7 +6,7 @@ Independent authors need audiobook narration, but hiring voice talent is slow, o
 
 ## 10-25 seconds: Product
 
-Project Vox is a narration bounty marketplace. An author posts a short excerpt and a SOL reward. Narrators submit real audio auditions with their wallet. The author selects a voice and pays directly on Solana devnet.
+Project Vox is a narration bounty marketplace. An author posts a paid audition award plus the expected full-book narration budget. Narrators submit real audio auditions with their wallet. The author selects a voice and pays the audition award directly on Solana devnet.
 
 ## 25-45 seconds: Live Flow
 
@@ -15,7 +15,7 @@ Project Vox is a narration bounty marketplace. An author posts a short excerpt a
 3. Play an audition.
 4. Show the selected narrator and wallet.
 5. Connect Phantom or Solflare on devnet.
-6. Click Pay.
+6. Click Pay award.
 
 ## 45-65 seconds: Solana Proof
 
@@ -25,7 +25,7 @@ The payment uses a direct SOL transfer and a memo:
 project-vox:bounty=<id>:submission=<id>
 ```
 
-The app calls a server verifier before marking anything paid. Verified receipts show as paid; unreachable RPC or mismatched transactions stay pending or failed. Pending receipts can be retried when RPC is available.
+The app calls a server verifier before marking the audition award paid. Verified receipts show as paid; unreachable RPC or mismatched transactions stay pending or failed. Pending receipts can be retried when RPC is available.
 
 ## 65-80 seconds: Blinks
 

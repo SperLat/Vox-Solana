@@ -1,6 +1,6 @@
 # Project Vox
 
-Solana devnet marketplace for audiobook narration bounties. Authors post short excerpts, narrators upload or record auditions, and authors/fans pay selected narrators directly with devnet SOL.
+Solana devnet marketplace for audiobook narration bounties. Authors post paid audition awards with a larger full-book narration budget, narrators upload or record auditions, and authors/fans pay selected narrators directly with devnet SOL.
 
 ## Stack
 
@@ -10,7 +10,7 @@ Solana devnet marketplace for audiobook narration bounties. Authors post short e
 - Solana Actions endpoint at `/api/actions/submissions/[id]/tip`
 - Payment verifier endpoint at `/api/payments/verify`
 
-No custom Solana program is used. Payments are direct wallet transfers with a memo:
+No custom Solana program is used. The hackathon MVP verifies direct payments for the selected audition award; the full narration budget is displayed as the follow-on project amount. Payments are direct wallet transfers with a memo:
 
 ```txt
 project-vox:bounty=<id>:submission=<id>
@@ -66,7 +66,7 @@ The hackathon policies are intentionally permissive for public demo writes. Tigh
 2. Create a bounty or select a seeded one.
 3. Upload or record an audition.
 4. Select an audition.
-5. Pay the narrator with devnet SOL.
+5. Pay the selected narrator the audition award with devnet SOL.
 6. Wait for verification status: verified, pending verification, or failed.
 7. Retry verification if RPC was temporarily unavailable.
 8. Copy or open the Blink action link from an audition.

@@ -66,7 +66,7 @@ export async function GET(request: Request, { params }: Params) {
             href: `${origin}/api/actions/submissions/${id}/tip?amount=0.05`
           },
           {
-            label: "Pay bounty",
+            label: "Pay audition award",
             href: `${origin}/api/actions/submissions/${id}/tip?amount=${bounty.reward_sol}`
           }
         ]
@@ -142,7 +142,7 @@ export async function POST(request: Request, { params }: Params) {
     {
       transaction: serialized.toString("base64"),
       message: usedLiveBlockhash
-        ? `Tip ${submission.narrator_name} ${amountSol.toFixed(2)} devnet SOL for ${bounty.title}.`
+        ? `Send ${submission.narrator_name} ${amountSol.toFixed(2)} devnet SOL for ${bounty.title}.`
         : `Preview transaction for ${submission.narrator_name}. The local server could not reach devnet RPC, so refresh this Action when RPC is available before broadcasting.`
     },
     { headers: ACTIONS_HEADERS }

@@ -44,7 +44,11 @@ function readLocalState(): MarketplaceState {
 function normalizeState(state: MarketplaceState): MarketplaceState {
   return {
     ...state,
-    bounties: state.bounties.map((bounty) => ({ ...bounty, reward_sol: Number(bounty.reward_sol) })),
+    bounties: state.bounties.map((bounty) => ({
+      ...bounty,
+      reward_sol: Number(bounty.reward_sol),
+      full_project_budget_sol: normalizeOptionalSol(bounty.full_project_budget_sol)
+    })),
     payments: state.payments.map((payment) => ({
       ...payment,
       amount_sol: Number(payment.amount_sol),
@@ -53,6 +57,15 @@ function normalizeState(state: MarketplaceState): MarketplaceState {
       verification_error: payment.verification_error || null
     }))
   };
+}
+
+function normalizeOptionalSol(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function writeLocalState(updater: (state: MarketplaceState) => MarketplaceState) {
@@ -104,11 +117,28 @@ export async function createBounty(input: NewBountyInput, coverFile?: File | nul
   }
 
   const { data, error } = await supabase.from(BOUNTIES_TABLE).insert(bounty).select("*").single();
+  if (error && isMissingFullBudgetColumn(error)) {
+    const { full_project_budget_sol: _fullProjectBudget, ...legacyBounty } = bounty;
+    void _fullProjectBudget;
+    const retry = await supabase.from(BOUNTIES_TABLE).insert(legacyBounty).select("*").single();
+    if (retry.error) {
+      throw retry.error;
+    }
+
+    console.warn("Supabase bounties table is missing full_project_budget_sol. Run the latest supabase/schema.sql to persist full budgets.");
+    return retry.data as Bounty;
+  }
+
   if (error) {
     throw error;
   }
 
   return data as Bounty;
+}
+
+function isMissingFullBudgetColumn(error: { message?: string; details?: string; code?: string }) {
+  const text = `${error.message || ""} ${error.details || ""} ${error.code || ""}`;
+  return /full_project_budget_sol|PGRST204/i.test(text);
 }
 
 async function uploadBountyCover(file: File, bountyId: string) {

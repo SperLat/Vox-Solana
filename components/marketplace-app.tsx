@@ -47,10 +47,11 @@ import {
   recordPayment,
   resetLocalDemoState,
   updatePaymentVerification,
+  upsertProfile,
   verifyPayment
 } from "@/lib/marketplace-store";
 import { explorerTxUrl, paymentMemo } from "@/lib/constants";
-import type { Bounty, BountyStatus, MarketplaceState, Payment, PaymentStatus, Submission } from "@/lib/types";
+import type { Bounty, BountyStatus, MarketplaceState, Payment, PaymentStatus, ProfileRole, Submission, VoxProfile } from "@/lib/types";
 import { useVoxWallet } from "@/components/wallet-context-provider";
 
 type Toast = {
@@ -85,6 +86,11 @@ type ManualVerifyForm = {
   tx_signature: string;
   submission_id: string;
 };
+type ProfileForm = {
+  display_name: string;
+  role: ProfileRole;
+  bio: string;
+};
 type NarratorProfile = {
   wallet: string;
   name: string;
@@ -94,6 +100,19 @@ type NarratorProfile = {
   genres: string[];
   average: number | null;
   topSubmission: Submission | null;
+};
+type AccountSubmission = {
+  submission: Submission;
+  bounty: Bounty | null;
+};
+type AccountWorkspace = {
+  profile: VoxProfile | null;
+  authoredBounties: Bounty[];
+  narratorSubmissions: AccountSubmission[];
+  incomingPayments: Payment[];
+  outgoingPayments: Payment[];
+  verifiedIncomingSol: number;
+  verifiedOutgoingSol: number;
 };
 
 const initialBountyForm = {
@@ -114,6 +133,11 @@ const initialSubmissionForm = {
 const initialManualVerifyForm: ManualVerifyForm = {
   tx_signature: "",
   submission_id: ""
+};
+const initialProfileForm: ProfileForm = {
+  display_name: "",
+  role: "both",
+  bio: ""
 };
 
 const demoSteps = [
@@ -251,6 +275,7 @@ export function MarketplaceApp() {
   const [boardFilters, setBoardFilters] = useState<BoardFilters>(defaultBoardFilters);
   const [reviewState, setReviewState] = useState<ReviewState>({});
   const [manualVerifyForm, setManualVerifyForm] = useState<ManualVerifyForm>(initialManualVerifyForm);
+  const [profileForm, setProfileForm] = useState<ProfileForm>(initialProfileForm);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -268,6 +293,21 @@ export function MarketplaceApp() {
       setSubmissionForm((current) => ({ ...current, narrator_wallet: current.narrator_wallet || wallet }));
     }
   }, [publicKey]);
+
+  useEffect(() => {
+    const wallet = publicKey?.toBase58();
+    if (!wallet) {
+      setProfileForm(initialProfileForm);
+      return;
+    }
+
+    const profile = state?.profiles.find((item) => item.wallet === wallet);
+    setProfileForm({
+      display_name: profile?.display_name || "",
+      role: profile?.role || "both",
+      bio: profile?.bio || ""
+    });
+  }, [publicKey, state?.profiles]);
 
   useEffect(() => {
     if (!audioFile) {
@@ -406,6 +446,33 @@ export function MarketplaceApp() {
     return { bounties, submissions, volume };
   }, [state]);
   const narratorProfiles = useMemo(() => buildNarratorProfiles(state, reviewState), [reviewState, state]);
+  const accountWorkspace = useMemo(() => buildAccountWorkspace(state, publicKey?.toBase58() || ""), [publicKey, state]);
+
+  async function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const wallet = publicKey?.toBase58();
+    if (!wallet) {
+      setToast({ tone: "error", message: "Connect a wallet before saving a profile." });
+      return;
+    }
+
+    setPendingAction("save-profile");
+    try {
+      await upsertProfile({
+        wallet,
+        display_name: profileForm.display_name,
+        role: profileForm.role,
+        bio: profileForm.bio
+      });
+      await refreshState();
+      setToast({ tone: "success", message: "Profile saved for this wallet." });
+    } catch (error) {
+      setToast({ tone: "error", message: getErrorMessage(error) });
+    } finally {
+      setPendingAction("");
+    }
+  }
 
   async function handleCreateBounty(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -871,9 +938,26 @@ export function MarketplaceApp() {
           stats={stats}
           connected={connected}
           publicKey={publicKey?.toBase58() || ""}
+          profile={accountWorkspace.profile}
           onBrowse={() => navigateToSection("bounty-board", "fan")}
           onAuthor={() => navigateToSection("create-bounty", "author")}
           onNarrator={() => navigateToSection("submit-audition", "narrator")}
+        />
+
+        <AccountWorkspacePanel
+          connected={connected}
+          wallet={publicKey?.toBase58() || ""}
+          workspace={accountWorkspace}
+          profileForm={profileForm}
+          pending={pendingAction === "save-profile"}
+          onProfileChange={(patch) => setProfileForm((current) => ({ ...current, ...patch }))}
+          onSaveProfile={handleSaveProfile}
+          onAuthor={() => navigateToSection("create-bounty", "author")}
+          onNarrator={() => navigateToSection("submit-audition", "narrator")}
+          onOpenBounty={(bountyId) => {
+            setSelectedBountyId(bountyId);
+            navigateToSection("bounty-detail");
+          }}
         />
 
         {demoMode ? <RoleSwitch role={demoRole} onChange={setDemoRole} /> : null}
@@ -1178,6 +1262,7 @@ export function MarketplaceApp() {
 function TopNav({ onNavigate }: { onNavigate: (sectionId: string, role?: DemoRole) => void }) {
   const items: Array<{ label: string; sectionId: string; role?: DemoRole }> = [
     { label: "Dashboard", sectionId: "dashboard" },
+    { label: "Workspace", sectionId: "workspace" },
     { label: "Bounties", sectionId: "bounty-board", role: "fan" },
     { label: "Author", sectionId: "create-bounty", role: "author" },
     { label: "Narrator", sectionId: "submit-audition", role: "narrator" },
@@ -1204,6 +1289,7 @@ function ProductLaunchPanel({
   stats,
   connected,
   publicKey,
+  profile,
   onBrowse,
   onAuthor,
   onNarrator
@@ -1211,6 +1297,7 @@ function ProductLaunchPanel({
   stats: { bounties: number; submissions: number; volume: number };
   connected: boolean;
   publicKey: string;
+  profile: VoxProfile | null;
   onBrowse: () => void;
   onAuthor: () => void;
   onNarrator: () => void;
@@ -1260,7 +1347,7 @@ function ProductLaunchPanel({
             </div>
             <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-ink/45">Account</p>
-              <p className="mt-1 truncate text-sm font-black">{connected ? truncateWallet(publicKey) : "No wallet connected"}</p>
+              <p className="mt-1 truncate text-sm font-black">{connected ? profile?.display_name || truncateWallet(publicKey) : "No wallet connected"}</p>
               <p className="mt-1 text-xs font-semibold leading-5 text-ink/55">
                 Wallet connection is the login layer for this MVP.
               </p>
@@ -1288,6 +1375,192 @@ function WorkflowCard({ icon, title, detail }: { icon: ReactNode; title: string;
         {title}
       </div>
       <p className="mt-2 text-xs font-semibold leading-5 text-ink/55">{detail}</p>
+    </div>
+  );
+}
+
+function AccountWorkspacePanel({
+  connected,
+  wallet,
+  workspace,
+  profileForm,
+  pending,
+  onProfileChange,
+  onSaveProfile,
+  onAuthor,
+  onNarrator,
+  onOpenBounty
+}: {
+  connected: boolean;
+  wallet: string;
+  workspace: AccountWorkspace;
+  profileForm: ProfileForm;
+  pending: boolean;
+  onProfileChange: (patch: Partial<ProfileForm>) => void;
+  onSaveProfile: (event: FormEvent<HTMLFormElement>) => void;
+  onAuthor: () => void;
+  onNarrator: () => void;
+  onOpenBounty: (bountyId: string) => void;
+}) {
+  return (
+    <section id="workspace" className="scroll-mt-5 rounded-lg border border-ink/10 bg-white/80 p-5 shadow-line backdrop-blur">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="font-serif text-3xl font-semibold leading-none">My workspace</h2>
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-ink/60">
+            Wallet login turns this into an account view: profile, authored bounties, narrator auditions, and payment receipts.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+            onClick={onAuthor}
+          >
+            <Plus className="h-4 w-4" />
+            New bounty
+          </button>
+          <button
+            type="button"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+            onClick={onNarrator}
+          >
+            <Mic className="h-4 w-4" />
+            New audition
+          </button>
+        </div>
+      </div>
+
+      {!connected ? (
+        <div className="mt-5 grid gap-4 rounded-lg border border-dashed border-ink/20 bg-paper/70 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-[0.14em] text-ink/50">Connect to unlock account tools</h3>
+            <p className="mt-2 text-sm font-semibold leading-6 text-ink/60">
+              The marketplace works as a wallet-first product. Connect Phantom or Solflare to save a profile and see only your work.
+            </p>
+          </div>
+          <WalletControls />
+        </div>
+      ) : (
+        <div className="mt-5 grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
+          <form className="rounded-lg border border-ink/10 bg-paper/70 p-4" onSubmit={onSaveProfile}>
+            <div className="flex items-start gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-ink text-paper">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-black uppercase tracking-[0.14em] text-ink/50">Profile</h3>
+                <p className="mt-1 break-all text-xs font-bold text-ink/45">{wallet}</p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3">
+              <TextInput label="Display name" value={profileForm.display_name} onChange={(value) => onProfileChange({ display_name: value })} />
+              <SelectInput
+                label="Marketplace role"
+                value={profileForm.role}
+                onChange={(value) => onProfileChange({ role: value as ProfileRole })}
+                options={[
+                  { label: "Author", value: "author" },
+                  { label: "Narrator", value: "narrator" },
+                  { label: "Author and narrator", value: "both" }
+                ]}
+              />
+              <TextArea label="Bio" value={profileForm.bio} onChange={(value) => onProfileChange({ bio: value })} />
+              <Button disabled={pending} icon={<Check className="h-4 w-4" />} type="submit">
+                Save profile
+              </Button>
+            </div>
+          </form>
+
+          <div className="grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-4">
+              <Metric label="My bounties" value={`${workspace.authoredBounties.length}`} />
+              <Metric label="My auditions" value={`${workspace.narratorSubmissions.length}`} />
+              <Metric label="Earned" value={`${workspace.verifiedIncomingSol.toFixed(2)}`} />
+              <Metric label="Paid out" value={`${workspace.verifiedOutgoingSol.toFixed(2)}`} />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <AccountList title="Authored bounties" empty="Create a bounty to see it here.">
+                {workspace.authoredBounties.map((bounty) => (
+                  <button
+                    key={bounty.id}
+                    type="button"
+                    className="rounded-lg border border-ink/10 bg-white px-3 py-2 text-left transition hover:border-ink/30"
+                    onClick={() => onOpenBounty(bounty.id)}
+                  >
+                    <span className="block truncate text-sm font-black">{bounty.title}</span>
+                    <span className="mt-1 block text-xs font-bold text-ink/50">
+                      {bounty.status} / {bounty.reward_sol.toFixed(2)} SOL award / {formatOptionalSol(bounty.full_project_budget_sol)} full
+                    </span>
+                  </button>
+                ))}
+              </AccountList>
+
+              <AccountList title="Narrator auditions" empty="Submit an audition to see it here.">
+                {workspace.narratorSubmissions.map(({ submission, bounty }) => (
+                  <button
+                    key={submission.id}
+                    type="button"
+                    className="rounded-lg border border-ink/10 bg-white px-3 py-2 text-left transition hover:border-ink/30"
+                    onClick={() => bounty && onOpenBounty(bounty.id)}
+                  >
+                    <span className="block truncate text-sm font-black">{bounty?.title || "Unknown bounty"}</span>
+                    <span className="mt-1 block text-xs font-bold text-ink/50">
+                      {submission.selected ? "Selected" : "Submitted"} / {bounty ? `${bounty.reward_sol.toFixed(2)} SOL award` : "No award data"}
+                    </span>
+                  </button>
+                ))}
+              </AccountList>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <AccountList title="Incoming receipts" empty="Verified narrator payments will appear here.">
+                {workspace.incomingPayments.map((payment) => (
+                  <a
+                    key={payment.id}
+                    href={explorerTxUrl(payment.tx_signature)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg border border-ink/10 bg-white px-3 py-2 transition hover:border-ink/30"
+                  >
+                    <span className="block truncate text-sm font-black">{payment.amount_sol.toFixed(2)} SOL received</span>
+                    <span className="mt-1 block text-xs font-bold text-ink/50">{receiptStatusLabel(payment.status, payment.verification_error)}</span>
+                  </a>
+                ))}
+              </AccountList>
+
+              <AccountList title="Outgoing receipts" empty="Author payments you send will appear here.">
+                {workspace.outgoingPayments.map((payment) => (
+                  <a
+                    key={payment.id}
+                    href={explorerTxUrl(payment.tx_signature)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg border border-ink/10 bg-white px-3 py-2 transition hover:border-ink/30"
+                  >
+                    <span className="block truncate text-sm font-black">{payment.amount_sol.toFixed(2)} SOL paid</span>
+                    <span className="mt-1 block text-xs font-bold text-ink/50">{receiptStatusLabel(payment.status, payment.verification_error)}</span>
+                  </a>
+                ))}
+              </AccountList>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AccountList({ title, empty, children }: { title: string; empty: string; children: ReactNode }) {
+  const hasItems = Boolean(children) && (!Array.isArray(children) || children.length > 0);
+
+  return (
+    <div className="rounded-lg border border-ink/10 bg-paper/70 p-3">
+      <h3 className="text-xs font-black uppercase tracking-[0.14em] text-ink/50">{title}</h3>
+      <div className="mt-3 grid gap-2">
+        {hasItems ? children : <div className="rounded-lg border border-dashed border-ink/20 bg-white/70 p-4 text-sm font-semibold text-ink/50">{empty}</div>}
+      </div>
     </div>
   );
 }
@@ -2364,6 +2637,36 @@ function TextArea({ label, value, onChange }: { label: string; value: string; on
       />
     </label>
   );
+}
+
+function buildAccountWorkspace(state: MarketplaceState | null, wallet: string): AccountWorkspace {
+  if (!state || !wallet) {
+    return {
+      profile: null,
+      authoredBounties: [],
+      narratorSubmissions: [],
+      incomingPayments: [],
+      outgoingPayments: [],
+      verifiedIncomingSol: 0,
+      verifiedOutgoingSol: 0
+    };
+  }
+
+  const bountyById = new Map(state.bounties.map((bounty) => [bounty.id, bounty]));
+  const incomingPayments = state.payments.filter((payment) => payment.recipient_wallet === wallet);
+  const outgoingPayments = state.payments.filter((payment) => payment.payer_wallet === wallet);
+
+  return {
+    profile: state.profiles.find((profile) => profile.wallet === wallet) || null,
+    authoredBounties: state.bounties.filter((bounty) => bounty.author_wallet === wallet),
+    narratorSubmissions: state.submissions
+      .filter((submission) => submission.narrator_wallet === wallet)
+      .map((submission) => ({ submission, bounty: bountyById.get(submission.bounty_id) || null })),
+    incomingPayments,
+    outgoingPayments,
+    verifiedIncomingSol: incomingPayments.reduce((total, payment) => (payment.status === "verified" ? total + payment.amount_sol : total), 0),
+    verifiedOutgoingSol: outgoingPayments.reduce((total, payment) => (payment.status === "verified" ? total + payment.amount_sol : total), 0)
+  };
 }
 
 function buildNarratorProfiles(state: MarketplaceState | null, reviews: ReviewState): NarratorProfile[] {

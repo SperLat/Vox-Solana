@@ -7,6 +7,7 @@ Solana devnet marketplace for audiobook narration bounties. Authors post paid au
 - Next.js App Router, TypeScript, Tailwind
 - Direct Phantom/Solflare browser wallet connector plus `@solana/web3.js`
 - Supabase database and public storage bucket for live bounties and audio
+- Wallet profile workspace for authors and narrators
 - Solana Actions endpoint at `/api/actions/submissions/[id]/tip`
 - Payment verifier endpoint at `/api/payments/verify`
 
@@ -56,6 +57,7 @@ The live schema is namespaced so it can share a demo Supabase project with Nagi/
 - `project_vox_bounties`
 - `project_vox_submissions`
 - `project_vox_payments`
+- `project_vox_profiles`
 - storage bucket `project-vox-auditions`
 
 The hackathon policies are intentionally permissive for public demo writes. Tighten them before any production use.
@@ -63,13 +65,14 @@ The hackathon policies are intentionally permissive for public demo writes. Tigh
 ## Demo Path
 
 1. Connect Phantom or Solflare on devnet.
-2. Create a bounty or select a seeded one.
-3. Upload or record an audition.
-4. Select an audition.
-5. Pay the selected narrator the audition award with devnet SOL.
-6. Wait for verification status: verified, pending verification, or failed.
-7. Retry verification if RPC was temporarily unavailable.
-8. Copy or open the Blink action link from an audition.
+2. Save a wallet profile in My workspace.
+3. Create a bounty or select a seeded one.
+4. Upload or record an audition.
+5. Select an audition.
+6. Pay the selected narrator the audition award with devnet SOL.
+7. Wait for verification status: verified, pending verification, or failed.
+8. Retry verification if RPC was temporarily unavailable.
+9. Copy or open the Blink action link from an audition.
 
 Only server-verified payments mark a bounty as paid. If devnet RPC is unreachable, the receipt remains pending instead of being shown as paid.
 

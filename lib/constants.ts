@@ -7,6 +7,7 @@ export const SOLANA_EXPLORER_CLUSTER = "devnet";
 export const BOUNTIES_TABLE = "project_vox_bounties";
 export const SUBMISSIONS_TABLE = "project_vox_submissions";
 export const PAYMENTS_TABLE = "project_vox_payments";
+export const PROFILES_TABLE = "project_vox_profiles";
 export const STORAGE_BUCKET = "project-vox-auditions";
 
 export const DEMO_AUTHOR_WALLET = "7p1RKdQbJnW2A4dzJns7cLGtYGbTRTuv7RRv9pZV4nEP";

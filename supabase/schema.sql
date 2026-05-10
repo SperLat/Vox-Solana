@@ -39,6 +39,15 @@ create table if not exists public.project_vox_payments (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.project_vox_profiles (
+  wallet text primary key,
+  display_name text not null default 'Project Vox user',
+  role text not null default 'both' check (role in ('author', 'narrator', 'both')),
+  bio text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.project_vox_bounties add column if not exists full_project_budget_sol numeric(12, 6);
 alter table public.project_vox_payments add column if not exists status text not null default 'pending_verification';
 alter table public.project_vox_payments add column if not exists verified_at timestamptz;
@@ -70,6 +79,7 @@ create index if not exists project_vox_payments_submission_id_idx on public.proj
 alter table public.project_vox_bounties enable row level security;
 alter table public.project_vox_submissions enable row level security;
 alter table public.project_vox_payments enable row level security;
+alter table public.project_vox_profiles enable row level security;
 
 drop policy if exists "Project Vox bounty reads" on public.project_vox_bounties;
 create policy "Project Vox bounty reads" on public.project_vox_bounties for select using (true);
@@ -94,6 +104,15 @@ create policy "Project Vox payment reads" on public.project_vox_payments for sel
 
 drop policy if exists "Project Vox payment inserts" on public.project_vox_payments;
 create policy "Project Vox payment inserts" on public.project_vox_payments for insert with check (true);
+
+drop policy if exists "Project Vox profile reads" on public.project_vox_profiles;
+create policy "Project Vox profile reads" on public.project_vox_profiles for select using (true);
+
+drop policy if exists "Project Vox profile inserts" on public.project_vox_profiles;
+create policy "Project Vox profile inserts" on public.project_vox_profiles for insert with check (true);
+
+drop policy if exists "Project Vox profile updates" on public.project_vox_profiles;
+create policy "Project Vox profile updates" on public.project_vox_profiles for update using (true) with check (true);
 
 insert into storage.buckets (id, name, public)
 values ('project-vox-auditions', 'project-vox-auditions', true)

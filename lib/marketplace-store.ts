@@ -1,6 +1,6 @@
 "use client";
 
-import { BOUNTIES_TABLE, PAYMENTS_TABLE, STORAGE_BUCKET, SUBMISSIONS_TABLE } from "@/lib/constants";
+import { BOUNTIES_TABLE, PAYMENTS_TABLE, PROFILES_TABLE, STORAGE_BUCKET, SUBMISSIONS_TABLE } from "@/lib/constants";
 import { seededState } from "@/lib/seed";
 import { getBrowserSupabase } from "@/lib/supabase-browser";
 import type {
@@ -10,8 +10,10 @@ import type {
   NewPaymentInput,
   NewSubmissionInput,
   Payment,
+  ProfileInput,
   Submission,
-  VerificationResponse
+  VerificationResponse,
+  VoxProfile
 } from "@/lib/types";
 
 const STORAGE_KEY = "project-vox-marketplace-v1";
@@ -55,7 +57,8 @@ function normalizeState(state: MarketplaceState): MarketplaceState {
       status: payment.status || "verified",
       verified_at: payment.verified_at || null,
       verification_error: payment.verification_error || null
-    }))
+    })),
+    profiles: Array.isArray(state.profiles) ? state.profiles : []
   };
 }
 
@@ -81,10 +84,11 @@ export async function loadMarketplaceState(): Promise<MarketplaceState> {
     return readLocalState();
   }
 
-  const [bounties, submissions, payments] = await Promise.all([
+  const [bounties, submissions, payments, profiles] = await Promise.all([
     supabase.from(BOUNTIES_TABLE).select("*").order("created_at", { ascending: false }),
     supabase.from(SUBMISSIONS_TABLE).select("*").order("created_at", { ascending: false }),
-    supabase.from(PAYMENTS_TABLE).select("*").order("created_at", { ascending: false })
+    supabase.from(PAYMENTS_TABLE).select("*").order("created_at", { ascending: false }),
+    supabase.from(PROFILES_TABLE).select("*").order("updated_at", { ascending: false })
   ]);
 
   if (bounties.error || submissions.error || payments.error) {
@@ -95,8 +99,50 @@ export async function loadMarketplaceState(): Promise<MarketplaceState> {
   return normalizeState({
     bounties: (bounties.data || []) as Bounty[],
     submissions: (submissions.data || []) as Submission[],
-    payments: (payments.data || []) as Payment[]
+    payments: (payments.data || []) as Payment[],
+    profiles: profiles.error ? readLocalState().profiles : ((profiles.data || []) as VoxProfile[])
   });
+}
+
+export async function upsertProfile(input: ProfileInput): Promise<VoxProfile> {
+  const now = new Date().toISOString();
+  const profile: VoxProfile = {
+    wallet: input.wallet,
+    display_name: input.display_name.trim() || "Project Vox user",
+    role: input.role,
+    bio: input.bio.trim(),
+    updated_at: now
+  };
+
+  const supabase = getBrowserSupabase();
+  if (!supabase) {
+    writeLocalState((state) => ({
+      ...state,
+      profiles: upsertProfileList(state.profiles || [], profile)
+    }));
+    return profile;
+  }
+
+  const { data, error } = await supabase.from(PROFILES_TABLE).upsert(profile, { onConflict: "wallet" }).select("*").single();
+  if (error && isMissingProfilesTable(error)) {
+    writeLocalState((state) => ({
+      ...state,
+      profiles: upsertProfileList(state.profiles || [], profile)
+    }));
+    console.warn("Supabase is missing project_vox_profiles. Run the latest supabase/schema.sql to persist wallet profiles.");
+    return profile;
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  return data as VoxProfile;
+}
+
+function upsertProfileList(profiles: VoxProfile[], profile: VoxProfile) {
+  const nextProfiles = profiles.filter((item) => item.wallet !== profile.wallet);
+  return [{ ...profile, created_at: profiles.find((item) => item.wallet === profile.wallet)?.created_at || profile.updated_at }, ...nextProfiles];
 }
 
 export async function createBounty(input: NewBountyInput, coverFile?: File | null): Promise<Bounty> {
@@ -139,6 +185,11 @@ export async function createBounty(input: NewBountyInput, coverFile?: File | nul
 function isMissingFullBudgetColumn(error: { message?: string; details?: string; code?: string }) {
   const text = `${error.message || ""} ${error.details || ""} ${error.code || ""}`;
   return /full_project_budget_sol|PGRST204/i.test(text);
+}
+
+function isMissingProfilesTable(error: { message?: string; details?: string; code?: string }) {
+  const text = `${error.message || ""} ${error.details || ""} ${error.code || ""}`;
+  return /project_vox_profiles|PGRST205|42P01/i.test(text);
 }
 
 async function uploadBountyCover(file: File, bountyId: string) {

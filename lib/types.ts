@@ -1,5 +1,6 @@
 export type BountyStatus = "open" | "awarded" | "paid";
 export type PaymentStatus = "verified" | "pending_verification" | "verification_failed";
+export type ProfileRole = "author" | "narrator" | "both";
 
 export type Bounty = {
   id: string;
@@ -40,10 +41,20 @@ export type Payment = {
   created_at?: string;
 };
 
+export type VoxProfile = {
+  wallet: string;
+  display_name: string;
+  role: ProfileRole;
+  bio: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type MarketplaceState = {
   bounties: Bounty[];
   submissions: Submission[];
   payments: Payment[];
+  profiles: VoxProfile[];
 };
 
 export type NewBountyInput = Pick<
@@ -52,6 +63,7 @@ export type NewBountyInput = Pick<
 >;
 
 export type NewSubmissionInput = Pick<Submission, "bounty_id" | "narrator_name" | "narrator_wallet" | "note">;
+export type ProfileInput = Pick<VoxProfile, "wallet" | "display_name" | "role" | "bio">;
 
 export type NewPaymentInput = Pick<
   Payment,

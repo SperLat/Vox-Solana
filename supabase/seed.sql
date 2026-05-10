@@ -37,6 +37,26 @@ values
   )
 on conflict (id) do nothing;
 
+insert into public.project_vox_profiles (wallet, display_name, role, bio)
+values
+  (
+    '7p1RKdQbJnW2A4dzJns7cLGtYGbTRTuv7RRv9pZV4nEP',
+    'Demo Author',
+    'author',
+    'Independent author posting paid audiobook audition awards.'
+  ),
+  (
+    '9xQeWvG816bUx9EPa3gKB8Z3fLkWjGNxuz9bSWrH4MM',
+    'Demo Narrator',
+    'narrator',
+    'Voice performer accepting audition awards and full narration work.'
+  )
+on conflict (wallet) do update set
+  display_name = excluded.display_name,
+  role = excluded.role,
+  bio = excluded.bio,
+  updated_at = now();
+
 insert into public.project_vox_payments (
   id,
   bounty_id,

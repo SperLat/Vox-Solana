@@ -11,11 +11,12 @@ Project Vox is a narration bounty marketplace. An author posts a paid audition a
 ## 25-45 seconds: Live Flow
 
 1. Open the bounty board.
-2. Select "The Red Library".
-3. Play an audition.
-4. Show the selected narrator and wallet.
-5. Connect Phantom or Solflare on devnet.
-6. Click Pay award.
+2. Show My workspace and the wallet profile area.
+3. Select "The Red Library".
+4. Play an audition.
+5. Show the selected narrator and wallet.
+6. Connect Phantom or Solflare on devnet.
+7. Click Pay award.
 
 ## 45-65 seconds: Solana Proof
 

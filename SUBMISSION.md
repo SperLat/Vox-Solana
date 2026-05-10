@@ -15,8 +15,10 @@ Project Vox is licensed under `AGPL-3.0-only` with the full license text include
 ## What Works
 
 - Browse seeded or live Supabase bounties.
+- Connect a wallet and save an author/narrator profile.
 - Create a new bounty with an audition award and full narration budget.
 - Upload or record an audio audition.
+- Use My workspace to see wallet-specific bounties, auditions, and receipts.
 - Select a narrator for a bounty.
 - Pay a narrator from Phantom or Solflare on devnet.
 - Verify payment server-side before marking a bounty paid.

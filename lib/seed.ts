@@ -92,5 +92,23 @@ export const seededState: MarketplaceState = {
       verification_error: "Demo receipt awaiting devnet verification.",
       created_at: "2026-05-09T07:30:00.000Z"
     }
+  ],
+  profiles: [
+    {
+      wallet: DEMO_AUTHOR_WALLET,
+      display_name: "Demo Author",
+      role: "author",
+      bio: "Independent author posting paid audiobook audition awards.",
+      created_at: "2026-05-09T05:45:00.000Z",
+      updated_at: "2026-05-09T05:45:00.000Z"
+    },
+    {
+      wallet: DEMO_NARRATOR_WALLET,
+      display_name: "Demo Narrator",
+      role: "narrator",
+      bio: "Voice performer accepting audition awards and full narration work.",
+      created_at: "2026-05-09T05:50:00.000Z",
+      updated_at: "2026-05-09T05:50:00.000Z"
+    }
   ]
 };

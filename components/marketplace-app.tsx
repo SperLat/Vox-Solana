@@ -4,6 +4,8 @@ import {
   ArrowUpRight,
   BadgeCheck,
   BookOpen,
+  ChevronDown,
+  ChevronUp,
   Check,
   CircleDollarSign,
   Clock3,
@@ -1893,6 +1895,25 @@ function BountyDetail({
   const authorActionMessage = connected
     ? "Only the bounty author wallet can grade, select, verify, or pay this award."
     : "Connect the bounty author wallet to grade, select, verify, or pay this award.";
+  const defaultExpandedSubmissionId = blinkSubmission?.id || "";
+  const [expandedSubmissionIds, setExpandedSubmissionIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setExpandedSubmissionIds(defaultExpandedSubmissionId ? new Set([defaultExpandedSubmissionId]) : new Set());
+  }, [bounty.id, defaultExpandedSubmissionId]);
+
+  function toggleSubmissionExpanded(submissionId: string) {
+    setExpandedSubmissionIds((current) => {
+      const next = new Set(current);
+      if (next.has(submissionId)) {
+        next.delete(submissionId);
+      } else {
+        next.add(submissionId);
+      }
+
+      return next;
+    });
+  }
 
   return (
     <Panel id="bounty-detail" className="scroll-mt-5 overflow-hidden p-0">
@@ -1937,56 +1958,82 @@ function BountyDetail({
               <span className="text-sm font-black text-ink/60">{submissions.length} submitted</span>
             </div>
             {submissions.length ? (
-              orderedSubmissions.map((submission) => (
-                <article
-                  key={submission.id}
-                  className={`rounded-lg border p-4 shadow-line ${submission.selected ? "border-sage/50 bg-sage/10" : "border-ink/10 bg-white/70"}`}
-                >
-                  <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="font-serif text-2xl font-semibold">{submission.narrator_name}</h4>
-                        {submission.selected ? <SmallBadge icon={<BadgeCheck className="h-3.5 w-3.5" />} label="Selected" /> : null}
-                        <PaymentBadge status={paymentStatusBySubmission.get(submission.id)} />
+              orderedSubmissions.map((submission, index) => {
+                const expanded = expandedSubmissionIds.has(submission.id);
+                const review = reviews[submission.id] || emptyReview();
+                const average = reviewAverage(review);
+
+                return (
+                  <article
+                    key={submission.id}
+                    className={`rounded-lg border p-4 shadow-line ${submission.selected ? "border-sage/50 bg-sage/10" : "border-ink/10 bg-white/70"}`}
+                  >
+                    <div className="grid gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-md bg-ink/5 px-2 py-1 text-xs font-black text-ink/45">#{index + 1}</span>
+                          <h4 className="font-serif text-2xl font-semibold">{submission.narrator_name}</h4>
+                          {submission.selected ? <SmallBadge icon={<BadgeCheck className="h-3.5 w-3.5" />} label="Selected" /> : null}
+                          {review.shortlisted ? <SmallBadge icon={<Star className="h-3.5 w-3.5" />} label="Shortlisted" /> : null}
+                          <PaymentBadge status={paymentStatusBySubmission.get(submission.id)} />
+                        </div>
+                        <p className="mt-1 text-sm leading-6 text-ink/60">{submission.note || "No note added."}</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-black text-ink/45">
+                          <span className="rounded-md bg-paper px-2 py-1">{average === null ? "No score" : `${average.toFixed(1)} avg`}</span>
+                          <span className="rounded-md bg-paper px-2 py-1">{truncateWallet(submission.narrator_wallet)}</span>
+                        </div>
                       </div>
-                      <p className="mt-1 text-sm leading-6 text-ink/60">{submission.note || "No note added."}</p>
-                      <p className="mt-1 break-all text-xs font-semibold text-ink/50">{submission.narrator_wallet}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+                          aria-expanded={expanded}
+                          onClick={() => toggleSubmissionExpanded(submission.id)}
+                        >
+                          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          {expanded ? "Collapse" : "Review"}
+                        </button>
+                        <IconButton
+                          disabled={!canManageBounty || pendingAction === `select-${submission.id}`}
+                          icon={<BadgeCheck className="h-4 w-4" />}
+                          label="Select"
+                          onClick={() => onSelect(submission)}
+                        />
+                        <IconButton
+                          disabled={!canManageBounty || pendingAction === `pay-${submission.id}`}
+                          icon={pendingAction === `pay-${submission.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <CircleDollarSign className="h-4 w-4" />}
+                          label="Pay award"
+                          onClick={() => onPay(submission, bounty)}
+                        />
+                        <IconButton icon={<Clipboard className="h-4 w-4" />} label="Share tip link" onClick={() => onCopyBlink(submission.id)} />
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <IconButton
-                        disabled={!canManageBounty || pendingAction === `select-${submission.id}`}
-                        icon={<BadgeCheck className="h-4 w-4" />}
-                        label="Select"
-                        onClick={() => onSelect(submission)}
-                      />
-                      <IconButton
-                        disabled={!canManageBounty || pendingAction === `pay-${submission.id}`}
-                        icon={pendingAction === `pay-${submission.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <CircleDollarSign className="h-4 w-4" />}
-                        label="Pay award"
-                        onClick={() => onPay(submission, bounty)}
-                      />
-                      <IconButton icon={<Clipboard className="h-4 w-4" />} label="Share tip link" onClick={() => onCopyBlink(submission.id)} />
-                    </div>
-                  </div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-center">
-                    <audio className="w-full" controls src={submission.audio_url} />
-                    <a
-                      href={`${blinkOrigin}/tip/${submission.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
-                    >
-                      View share page <ArrowUpRight className="h-4 w-4" />
-                    </a>
-                  </div>
-                  <SubmissionReviewPanel
-                    review={reviews[submission.id] || emptyReview()}
-                    disabled={!canManageBounty}
-                    disabledReason={authorActionMessage}
-                    onChange={(patch) => onReviewChange(submission.id, patch)}
-                  />
-                </article>
-              ))
+
+                    {expanded ? (
+                      <>
+                        <p className="mt-3 break-all text-xs font-semibold text-ink/50">{submission.narrator_wallet}</p>
+                        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-center">
+                          <audio className="w-full" controls src={submission.audio_url} />
+                          <a
+                            href={`${blinkOrigin}/tip/${submission.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+                          >
+                            View share page <ArrowUpRight className="h-4 w-4" />
+                          </a>
+                        </div>
+                        <SubmissionReviewPanel
+                          review={review}
+                          disabled={!canManageBounty}
+                          disabledReason={authorActionMessage}
+                          onChange={(patch) => onReviewChange(submission.id, patch)}
+                        />
+                      </>
+                    ) : null}
+                  </article>
+                );
+              })
             ) : (
               <div className="rounded-lg border border-dashed border-ink/20 bg-white/60 p-8 text-center">
                 <Sparkles className="mx-auto h-8 w-8 text-clay" />

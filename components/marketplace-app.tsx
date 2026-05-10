@@ -1896,9 +1896,11 @@ function BountyDetail({
 
   return (
     <Panel id="bounty-detail" className="scroll-mt-5 overflow-hidden p-0">
-      <div className="grid gap-0 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <div className="relative min-h-72 bg-ink">
-          <Image src={bounty.cover_art || "/covers/river-manual.svg"} alt="" fill className="object-cover" priority />
+      <div className="grid gap-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+        <div className="bg-ink p-5">
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-lg border border-paper/10 bg-paper/5 shadow-soft">
+            <Image src={bounty.cover_art || "/covers/river-manual.svg"} alt={`${bounty.title} cover art`} fill className="object-cover" priority />
+          </div>
         </div>
         <div className="p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

@@ -21,8 +21,27 @@ values
     '7p1RKdQbJnW2A4dzJns7cLGtYGbTRTuv7RRv9pZV4nEP',
     'open',
     '/covers/river-manual.svg'
+  ),
+  (
+    'bounty-orchid',
+    'The Orchid Clock',
+    'Every morning the clock bloomed at seven, and every evening it folded away one hour of someone else''s life. Ana was the first to notice the missing minutes.',
+    'Literary mystery',
+    0.32,
+    3.20,
+    '7p1RKdQbJnW2A4dzJns7cLGtYGbTRTuv7RRv9pZV4nEP',
+    'awarded',
+    '/covers/orchid-clock.svg'
   )
-on conflict (id) do update set full_project_budget_sol = excluded.full_project_budget_sol;
+on conflict (id) do update set
+  title = excluded.title,
+  excerpt = excluded.excerpt,
+  genre = excluded.genre,
+  reward_sol = excluded.reward_sol,
+  full_project_budget_sol = excluded.full_project_budget_sol,
+  author_wallet = excluded.author_wallet,
+  status = excluded.status,
+  cover_art = excluded.cover_art;
 
 insert into public.project_vox_submissions (id, bounty_id, narrator_name, narrator_wallet, audio_url, note, selected)
 values
@@ -30,12 +49,36 @@ values
     'submission-luz',
     'bounty-mars',
     'Luz Vega',
-    '9xQeWvG816bUx9EPa3gKB8Z3fLkWjGNxuz9bSWrH4MM',
+    'CqsSNVZHeHYsFteyhfBA47w34HL8pZ27Z5bMViK7hg9Z',
     '/audio/demo-audition.wav',
     'Warm documentary tone with a slightly haunted cadence for the discovery scene.',
     false
+  ),
+  (
+    'submission-ari',
+    'bounty-river',
+    'Ari Sol',
+    '8ndNRpnMS5a8mCwo6iSK8hGrm82FYqMQELc743CfAQS2',
+    '/audio/demo-audition.wav',
+    'Fast, intimate pacing for a serialized adventure opener.',
+    false
+  ),
+  (
+    'submission-mika',
+    'bounty-orchid',
+    'Mika Rowan',
+    '8i3z8GZpzz1NmfgcmYpouJ1vGfL6i1cbaopYMRK9DJtj',
+    '/audio/demo-audition.wav',
+    'Quiet literary read with crisp consonants and restrained suspense.',
+    true
   )
-on conflict (id) do nothing;
+on conflict (id) do update set
+  bounty_id = excluded.bounty_id,
+  narrator_name = excluded.narrator_name,
+  narrator_wallet = excluded.narrator_wallet,
+  audio_url = excluded.audio_url,
+  note = excluded.note,
+  selected = excluded.selected;
 
 insert into public.project_vox_profiles (wallet, display_name, role, bio)
 values
@@ -46,10 +89,22 @@ values
     'Independent author posting paid audiobook audition awards.'
   ),
   (
-    '9xQeWvG816bUx9EPa3gKB8Z3fLkWjGNxuz9bSWrH4MM',
-    'Demo Narrator',
+    'CqsSNVZHeHYsFteyhfBA47w34HL8pZ27Z5bMViK7hg9Z',
+    'Luz Vega',
     'narrator',
-    'Voice performer accepting audition awards and full narration work.'
+    'Warm documentary narrator for speculative fiction and discovery scenes.'
+  ),
+  (
+    '8ndNRpnMS5a8mCwo6iSK8hGrm82FYqMQELc743CfAQS2',
+    'Ari Sol',
+    'narrator',
+    'Fast-paced serial adventure narrator with intimate scene delivery.'
+  ),
+  (
+    '8i3z8GZpzz1NmfgcmYpouJ1vGfL6i1cbaopYMRK9DJtj',
+    'Mika Rowan',
+    'narrator',
+    'Literary mystery narrator with restrained suspense and crisp diction.'
   )
 on conflict (wallet) do update set
   display_name = excluded.display_name,
@@ -72,15 +127,25 @@ insert into public.project_vox_payments (
 )
 values (
   'payment-demo-pending',
-  'bounty-mars',
-  'submission-luz',
+  'bounty-orchid',
+  'submission-mika',
   '7p1RKdQbJnW2A4dzJns7cLGtYGbTRTuv7RRv9pZV4nEP',
-  '9xQeWvG816bUx9EPa3gKB8Z3fLkWjGNxuz9bSWrH4MM',
-  0.24,
+  '8i3z8GZpzz1NmfgcmYpouJ1vGfL6i1cbaopYMRK9DJtj',
+  0.32,
   'demo-pending-signature',
-  'project-vox:bounty=bounty-mars:submission=submission-luz',
+  'project-vox:bounty=bounty-orchid:submission=submission-mika',
   'pending_verification',
   null,
   'Demo receipt awaiting devnet verification.'
 )
-on conflict (id) do nothing;
+on conflict (id) do update set
+  bounty_id = excluded.bounty_id,
+  submission_id = excluded.submission_id,
+  payer_wallet = excluded.payer_wallet,
+  recipient_wallet = excluded.recipient_wallet,
+  amount_sol = excluded.amount_sol,
+  tx_signature = excluded.tx_signature,
+  memo = excluded.memo,
+  status = excluded.status,
+  verified_at = excluded.verified_at,
+  verification_error = excluded.verification_error;

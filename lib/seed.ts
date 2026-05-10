@@ -2,6 +2,8 @@ import type { MarketplaceState } from "@/lib/types";
 import { DEMO_AUTHOR_WALLET, DEMO_NARRATOR_WALLET } from "@/lib/constants";
 
 const demoAudio = "/audio/demo-audition.wav";
+const ARI_DEMO_WALLET = "8ndNRpnMS5a8mCwo6iSK8hGrm82FYqMQELc743CfAQS2";
+const MIKA_DEMO_WALLET = "8i3z8GZpzz1NmfgcmYpouJ1vGfL6i1cbaopYMRK9DJtj";
 
 export const seededState: MarketplaceState = {
   bounties: [
@@ -60,7 +62,7 @@ export const seededState: MarketplaceState = {
       id: "submission-ari",
       bounty_id: "bounty-river",
       narrator_name: "Ari Sol",
-      narrator_wallet: DEMO_NARRATOR_WALLET,
+      narrator_wallet: ARI_DEMO_WALLET,
       audio_url: demoAudio,
       note: "Fast, intimate pacing for a serialized adventure opener.",
       selected: false,
@@ -70,7 +72,7 @@ export const seededState: MarketplaceState = {
       id: "submission-mika",
       bounty_id: "bounty-orchid",
       narrator_name: "Mika Rowan",
-      narrator_wallet: DEMO_NARRATOR_WALLET,
+      narrator_wallet: MIKA_DEMO_WALLET,
       audio_url: demoAudio,
       note: "Quiet literary read with crisp consonants and restrained suspense.",
       selected: true,
@@ -83,7 +85,7 @@ export const seededState: MarketplaceState = {
       bounty_id: "bounty-orchid",
       submission_id: "submission-mika",
       payer_wallet: DEMO_AUTHOR_WALLET,
-      recipient_wallet: DEMO_NARRATOR_WALLET,
+      recipient_wallet: MIKA_DEMO_WALLET,
       amount_sol: 0.32,
       tx_signature: "demo-pending-signature",
       memo: "project-vox:bounty=bounty-orchid:submission=submission-mika",
@@ -104,11 +106,27 @@ export const seededState: MarketplaceState = {
     },
     {
       wallet: DEMO_NARRATOR_WALLET,
-      display_name: "Demo Narrator",
+      display_name: "Luz Vega",
       role: "narrator",
-      bio: "Voice performer accepting audition awards and full narration work.",
+      bio: "Warm documentary narrator for speculative fiction and discovery scenes.",
       created_at: "2026-05-09T05:50:00.000Z",
       updated_at: "2026-05-09T05:50:00.000Z"
+    },
+    {
+      wallet: ARI_DEMO_WALLET,
+      display_name: "Ari Sol",
+      role: "narrator",
+      bio: "Fast-paced serial adventure narrator with intimate scene delivery.",
+      created_at: "2026-05-09T05:52:00.000Z",
+      updated_at: "2026-05-09T05:52:00.000Z"
+    },
+    {
+      wallet: MIKA_DEMO_WALLET,
+      display_name: "Mika Rowan",
+      role: "narrator",
+      bio: "Literary mystery narrator with restrained suspense and crisp diction.",
+      created_at: "2026-05-09T05:54:00.000Z",
+      updated_at: "2026-05-09T05:54:00.000Z"
     }
   ]
 };

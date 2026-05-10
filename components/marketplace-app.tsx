@@ -2263,7 +2263,7 @@ function TipActionPreviewPanel({
 
   return (
     <div className="mt-6 rounded-lg border border-vox/20 bg-vox/10 p-4">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+      <div className="grid gap-4">
         <div className="min-w-0 max-w-3xl">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 shrink-0 text-vox" />
@@ -2275,7 +2275,7 @@ function TipActionPreviewPanel({
           <p className="mt-2 w-full break-all rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-ink/55">{shareUrl}</p>
           <p className="mt-2 w-full break-all text-xs font-bold leading-5 text-ink/45">{paymentMemo(bounty.id, submission.id)}</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap xl:justify-end">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <IconButton icon={<Copy className="h-4 w-4" />} label="Copy tip link" onClick={() => onCopyBlink(submission.id)} />
           <a
             href={shareUrl}

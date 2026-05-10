@@ -24,7 +24,7 @@ Project Vox is licensed under `AGPL-3.0-only` with the full license text include
 - Verify payment server-side before marking a bounty paid.
 - Retry pending payment verification if RPC was temporarily unavailable.
 - View explorer receipts.
-- Open a Solana Action/Blink endpoint for narrator tipping.
+- Open a shareable Solana Action endpoint for narrator tipping.
 
 ## Solana Usage
 

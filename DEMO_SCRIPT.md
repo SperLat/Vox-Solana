@@ -28,9 +28,9 @@ project-vox:bounty=<id>:submission=<id>
 
 The app calls a server verifier before marking the audition award paid. Verified receipts show as paid; unreachable RPC or mismatched transactions stay pending or failed. Pending receipts can be retried when RPC is available.
 
-## 65-80 seconds: Blinks
+## 65-80 seconds: Shareable Tip Action
 
-Open the Blink link for an audition. The Action endpoint returns metadata and a signable transaction so fans can tip a narrator from Blink-enabled surfaces.
+Open the shareable tip link for an audition. The Solana Action endpoint returns metadata and a signable transaction so fans can tip a narrator from supported surfaces.
 
 ## 80-90 seconds: Close
 

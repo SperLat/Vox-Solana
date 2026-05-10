@@ -146,7 +146,7 @@ const demoSteps = [
   "Select narrator",
   "Pay on devnet",
   "Verify receipt",
-  "Open Blink"
+  "Share tip link"
 ];
 const demoRoles: DemoRole[] = ["author", "narrator", "fan"];
 const roleGuides: Record<
@@ -177,8 +177,8 @@ const roleGuides: Record<
     label: "Fan",
     icon: <CircleDollarSign className="h-4 w-4" />,
     headline: "Fan view",
-    description: "Listen to auditions, open a Blink-style Action, and tip a narrator directly on Solana devnet.",
-    primaryAction: "Use the Blink and payment receipt panels."
+    description: "Listen to auditions, open a shareable Solana tip action, and tip a narrator directly on devnet.",
+    primaryAction: "Use the tip link and payment receipt panels."
   }
 };
 
@@ -797,7 +797,7 @@ export function MarketplaceApp() {
     const link = `${blinkOrigin}/api/actions/submissions/${submissionId}/tip`;
     try {
       await navigator.clipboard.writeText(link);
-      setToast({ tone: "success", message: "Blink action link copied." });
+      setToast({ tone: "success", message: "Tip link copied." });
     } catch {
       setToast({ tone: "info", message: link });
     }
@@ -1890,7 +1890,7 @@ function BountyDetail({
           <ReviewWorkspaceSummary submissions={submissions} reviews={reviews} canManage={canManageBounty} />
           {!canManageBounty ? (
             <div className="mt-4 rounded-lg border border-clay/20 bg-clay/10 px-4 py-3 text-sm font-semibold leading-6 text-clay">
-              {authorActionMessage} Browsing, listening, and opening Blinks remain public.
+              {authorActionMessage} Browsing, listening, and sharing tip links remain public.
             </div>
           ) : null}
 
@@ -1928,7 +1928,7 @@ function BountyDetail({
                         label="Pay award"
                         onClick={() => onPay(submission, bounty)}
                       />
-                      <IconButton icon={<Clipboard className="h-4 w-4" />} label="Blink" onClick={() => onCopyBlink(submission.id)} />
+                      <IconButton icon={<Clipboard className="h-4 w-4" />} label="Share tip link" onClick={() => onCopyBlink(submission.id)} />
                     </div>
                   </div>
                   <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-center">
@@ -1939,7 +1939,7 @@ function BountyDetail({
                       rel="noreferrer"
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
                     >
-                      Open Action <ArrowUpRight className="h-4 w-4" />
+                      Open tip action <ArrowUpRight className="h-4 w-4" />
                     </a>
                   </div>
                   <SubmissionReviewPanel
@@ -1960,7 +1960,7 @@ function BountyDetail({
           </div>
 
           {blinkSubmission ? (
-            <BlinkPreviewPanel bounty={bounty} submission={blinkSubmission} blinkOrigin={blinkOrigin} onCopyBlink={onCopyBlink} />
+            <TipActionPreviewPanel bounty={bounty} submission={blinkSubmission} blinkOrigin={blinkOrigin} onCopyBlink={onCopyBlink} />
           ) : null}
 
           <ManualReceiptVerifierPanel
@@ -2213,7 +2213,7 @@ function ScoreControl({ label, value, disabled, onChange }: { label: string; val
   );
 }
 
-function BlinkPreviewPanel({
+function TipActionPreviewPanel({
   bounty,
   submission,
   blinkOrigin,
@@ -2232,23 +2232,23 @@ function BlinkPreviewPanel({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-vox" />
-            <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Blink preview</h3>
+            <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Shareable tip link</h3>
           </div>
           <p className="mt-2 text-sm font-semibold text-ink/65">
-            Shareable tip action for {submission.narrator_name} on {bounty.title}. The full audition award is {bounty.reward_sol.toFixed(2)} SOL.
+            Public Solana Action link for tipping {submission.narrator_name} on {bounty.title}. The full author award is {bounty.reward_sol.toFixed(2)} SOL.
           </p>
           <p className="mt-2 break-all rounded-lg bg-white px-3 py-2 text-xs font-bold text-ink/55">{actionUrl}</p>
           <p className="mt-2 break-all text-xs font-bold text-ink/45">{paymentMemo(bounty.id, submission.id)}</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <IconButton icon={<Copy className="h-4 w-4" />} label="Copy" onClick={() => onCopyBlink(submission.id)} />
+          <IconButton icon={<Copy className="h-4 w-4" />} label="Copy tip link" onClick={() => onCopyBlink(submission.id)} />
           <a
             href={actionUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ink px-3 text-sm font-black text-paper transition hover:bg-ink/90"
           >
-            Open <ArrowUpRight className="h-4 w-4" />
+            Open tip action <ArrowUpRight className="h-4 w-4" />
           </a>
         </div>
       </div>
@@ -2382,7 +2382,7 @@ function WhySolanaPanel() {
       <div className="mt-4 grid gap-3 text-sm font-semibold leading-6 text-ink/60">
         <p>Authors can pay narrators directly, without marketplace custody or a slow payout cycle.</p>
         <p>Each payment carries a memo that links the transaction to one bounty and one audition.</p>
-        <p>Every audition can become a shareable Solana Action so fans can tip a voice from any Blink surface.</p>
+        <p>Every audition can become a shareable Solana Action link so fans can tip a voice from supported surfaces.</p>
       </div>
     </Panel>
   );

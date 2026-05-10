@@ -50,7 +50,7 @@ Project Vox is wallet-first. Browsing and listening are public. Creating bountie
 
 `SUPABASE_SERVER_URL` is optional. Use it only when the server container should reach a self-hosted Supabase endpoint internally while browsers use `NEXT_PUBLIC_SUPABASE_URL`.
 
-`NEXT_PUBLIC_APP_URL` is optional locally, but set it in production to the public app origin, for example `https://vox.sperlat.dev`. Solana Action metadata uses it for absolute Blink URLs behind reverse proxies.
+`NEXT_PUBLIC_APP_URL` is optional locally, but set it in production to the public app origin, for example `https://vox.sperlat.dev`. Solana Action metadata uses it for absolute public tip-action URLs behind reverse proxies.
 
 ## Supabase
 
@@ -76,7 +76,7 @@ The hackathon policies are intentionally permissive for public demo writes. Tigh
 6. Pay the selected narrator the audition award with devnet SOL.
 7. Wait for verification status: verified, pending verification, or failed.
 8. Retry verification if RPC was temporarily unavailable.
-9. Copy or open the Blink action link from an audition.
+9. Copy or open the shareable tip action link from an audition.
 
 Only server-verified payments mark a bounty as paid. If devnet RPC is unreachable, the receipt remains pending instead of being shown as paid.
 

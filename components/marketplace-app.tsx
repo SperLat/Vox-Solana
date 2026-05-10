@@ -843,7 +843,7 @@ export function MarketplaceApp() {
           </div>
         </header>
 
-        <RoleSwitch role={demoRole} onChange={setDemoRole} />
+        {demoMode ? <RoleSwitch role={demoRole} onChange={setDemoRole} /> : null}
 
         {toast ? (
           <div
@@ -865,12 +865,14 @@ export function MarketplaceApp() {
         <section className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="flex flex-col gap-5">
             <DemoModePanel enabled={demoMode} onToggle={() => setDemoMode((current) => !current)} onReset={() => void handleResetDemo()} />
-            <DemoToolkitPanel
-              pendingAction={pendingAction}
-              onFillBountyTemplate={handleFillBountyTemplate}
-              onFillSubmissionTemplate={() => void handleFillSubmissionTemplate()}
-              onUseDemoAudition={() => void handleUseDemoAudition()}
-            />
+            {demoMode ? (
+              <DemoToolkitPanel
+                pendingAction={pendingAction}
+                onFillBountyTemplate={handleFillBountyTemplate}
+                onFillSubmissionTemplate={() => void handleFillSubmissionTemplate()}
+                onUseDemoAudition={() => void handleUseDemoAudition()}
+              />
+            ) : null}
 
             <Panel>
               <div className="flex items-center justify-between gap-3">
@@ -889,7 +891,7 @@ export function MarketplaceApp() {
               </div>
             </Panel>
 
-            <Panel className={demoRole === "fan" ? "ring-2 ring-vox/20" : ""}>
+            <Panel className={demoMode && demoRole === "fan" ? "ring-2 ring-vox/20" : ""}>
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Bounty board</h2>
                 <Filter className="h-4 w-4 text-clay" />
@@ -940,20 +942,22 @@ export function MarketplaceApp() {
               </div>
             </Panel>
 
-            <Panel className={demoRole === "author" ? "ring-2 ring-clay/25" : ""}>
+            <Panel className={demoMode && demoRole === "author" ? "ring-2 ring-clay/25" : ""}>
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 text-clay" />
                 <h2 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Post a bounty</h2>
               </div>
-              <button
-                type="button"
-                className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
-                onClick={handleFillBountyTemplate}
-              >
-                <Wand2 className="h-4 w-4" />
-                Fill judge template
-              </button>
-              <form className="mt-4 flex flex-col gap-3" onSubmit={handleCreateBounty}>
+              {demoMode ? (
+                <button
+                  type="button"
+                  className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+                  onClick={handleFillBountyTemplate}
+                >
+                  <Wand2 className="h-4 w-4" />
+                  Fill judge template
+                </button>
+              ) : null}
+              <form className={`${demoMode ? "mt-4" : "mt-3"} flex flex-col gap-3`} onSubmit={handleCreateBounty}>
                 <TextInput label="Title" value={bountyForm.title} onChange={(value) => setBountyForm((current) => ({ ...current, title: value }))} />
                 <div className="grid grid-cols-2 gap-3">
                   <TextInput label="Genre" value={bountyForm.genre} onChange={(value) => setBountyForm((current) => ({ ...current, genre: value }))} />
@@ -984,14 +988,16 @@ export function MarketplaceApp() {
                     value={bountyForm.author_wallet}
                     onChange={(value) => setBountyForm((current) => ({ ...current, author_wallet: value }))}
                   />
-                  <button
-                    type="button"
-                    className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white"
-                    onClick={() => fillDemoWallet("author")}
-                  >
-                    <Wand2 className="h-3.5 w-3.5" />
-                    Use demo wallet
-                  </button>
+                  {demoMode ? (
+                    <button
+                      type="button"
+                      className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white"
+                      onClick={() => fillDemoWallet("author")}
+                    >
+                      <Wand2 className="h-3.5 w-3.5" />
+                      Use demo wallet
+                    </button>
+                  ) : null}
                 </div>
                 <Button disabled={pendingAction === "create-bounty"} icon={<Plus className="h-4 w-4" />} type="submit">
                   Post bounty
@@ -1025,7 +1031,7 @@ export function MarketplaceApp() {
               />
             ) : null}
 
-            <Panel className={demoRole === "narrator" ? "ring-2 ring-sage/25" : ""}>
+            <Panel className={demoMode && demoRole === "narrator" ? "ring-2 ring-sage/25" : ""}>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-serif text-2xl font-semibold">Submit an audition</h2>
@@ -1049,14 +1055,16 @@ export function MarketplaceApp() {
                     value={submissionForm.narrator_wallet}
                     onChange={(value) => setSubmissionForm((current) => ({ ...current, narrator_wallet: value }))}
                   />
-                  <button
-                    type="button"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 self-end rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white sm:col-start-2"
-                    onClick={() => fillDemoWallet("narrator")}
-                  >
-                    <Wand2 className="h-3.5 w-3.5" />
-                    Demo narrator wallet
-                  </button>
+                  {demoMode ? (
+                    <button
+                      type="button"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 self-end rounded-lg border border-ink/10 bg-paper px-3 text-xs font-black text-ink transition hover:border-ink/30 hover:bg-white sm:col-start-2"
+                      onClick={() => fillDemoWallet("narrator")}
+                    >
+                      <Wand2 className="h-3.5 w-3.5" />
+                      Demo narrator wallet
+                    </button>
+                  ) : null}
                   <div className="sm:col-span-2">
                     <TextArea
                       label="Direction note"
@@ -1068,15 +1076,17 @@ export function MarketplaceApp() {
 
                 <div className="rounded-lg border border-ink/10 bg-paper/70 p-3">
                   <div className="grid gap-2">
-                    <button
-                      type="button"
-                      className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-vox/20 bg-vox/10 px-3 text-sm font-black text-vox transition hover:border-vox/40 hover:bg-vox/15 disabled:opacity-50"
-                      disabled={pendingAction === "demo-audio"}
-                      onClick={() => void handleFillSubmissionTemplate()}
-                    >
-                      {pendingAction === "demo-audio" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                      Use demo take
-                    </button>
+                    {demoMode ? (
+                      <button
+                        type="button"
+                        className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-vox/20 bg-vox/10 px-3 text-sm font-black text-vox transition hover:border-vox/40 hover:bg-vox/15 disabled:opacity-50"
+                        disabled={pendingAction === "demo-audio"}
+                        onClick={() => void handleFillSubmissionTemplate()}
+                      >
+                        {pendingAction === "demo-audio" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                        Use demo take
+                      </button>
+                    ) : null}
                     <label className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-dashed border-ink/30 bg-white px-3 text-sm font-black text-ink/70 transition hover:border-ink">
                       <Upload className="h-4 w-4" />
                       Upload audio
@@ -1847,7 +1857,9 @@ function DemoModePanel({ enabled, onToggle, onReset }: { enabled: boolean; onTog
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Demo mode</h2>
-          <p className="mt-2 text-sm font-medium leading-6 text-ink/60">A judge-ready walkthrough of the real product flow.</p>
+          <p className="mt-2 text-sm font-medium leading-6 text-ink/60">
+            {enabled ? "Judge helpers are visible for the walkthrough." : "Demo helpers are hidden. The marketplace is in platform mode."}
+          </p>
         </div>
         <button
           className={`h-8 rounded-md px-3 text-xs font-black transition ${enabled ? "bg-ink text-paper" : "border border-ink/10 bg-paper text-ink"}`}
@@ -1866,13 +1878,15 @@ function DemoModePanel({ enabled, onToggle, onReset }: { enabled: boolean; onTog
           ))}
         </ol>
       ) : null}
-      <button
-        className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
-        onClick={onReset}
-      >
-        <RotateCcw className="h-4 w-4" />
-        Reset local demo
-      </button>
+      {enabled ? (
+        <button
+          className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-ink/10 bg-paper px-3 text-sm font-black text-ink transition hover:border-ink/30 hover:bg-white"
+          onClick={onReset}
+        >
+          <RotateCcw className="h-4 w-4" />
+          Reset local demo
+        </button>
+      ) : null}
     </Panel>
   );
 }

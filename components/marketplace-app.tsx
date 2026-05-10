@@ -1478,7 +1478,7 @@ function AccountWorkspacePanel({
       </div>
 
       {!connected ? (
-        <div className="mt-5 grid gap-4 rounded-lg border border-dashed border-ink/20 bg-paper/70 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div className="mt-5 grid gap-4 rounded-lg border border-dashed border-ink/20 bg-paper/70 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div>
             <h3 className="text-sm font-black uppercase tracking-[0.14em] text-ink/50">Connect to unlock account tools</h3>
             <p className="mt-2 text-sm font-semibold leading-6 text-ink/60">
@@ -2263,19 +2263,19 @@ function TipActionPreviewPanel({
 
   return (
     <div className="mt-6 rounded-lg border border-vox/20 bg-vox/10 p-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+        <div className="min-w-0 max-w-3xl">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-vox" />
+            <Sparkles className="h-4 w-4 shrink-0 text-vox" />
             <h3 className="text-sm font-black uppercase tracking-[0.16em] text-ink/50">Shareable tip link</h3>
           </div>
-          <p className="mt-2 text-sm font-semibold text-ink/65">
+          <p className="mt-2 text-sm font-semibold leading-6 text-ink/65">
             Share this public page for tipping {submission.narrator_name}. It includes cover art, audio playback, and the Solana Action URL for supported clients.
           </p>
-          <p className="mt-2 break-all rounded-lg bg-white px-3 py-2 text-xs font-bold text-ink/55">{shareUrl}</p>
-          <p className="mt-2 break-all text-xs font-bold text-ink/45">{paymentMemo(bounty.id, submission.id)}</p>
+          <p className="mt-2 w-full break-all rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-ink/55">{shareUrl}</p>
+          <p className="mt-2 w-full break-all text-xs font-bold leading-5 text-ink/45">{paymentMemo(bounty.id, submission.id)}</p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap xl:justify-end">
           <IconButton icon={<Copy className="h-4 w-4" />} label="Copy tip link" onClick={() => onCopyBlink(submission.id)} />
           <a
             href={shareUrl}

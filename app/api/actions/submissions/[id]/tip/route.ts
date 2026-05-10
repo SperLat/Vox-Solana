@@ -24,10 +24,29 @@ export async function OPTIONS() {
   });
 }
 
+function getPublicOrigin(request: Request) {
+  const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (configuredOrigin) {
+    return configuredOrigin.replace(/\/$/, "");
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host");
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const proto = forwardedProto || "https";
+
+  if (host && !host.startsWith("0.0.0.0")) {
+    return `${proto}://${host}`;
+  }
+
+  return new URL(request.url).origin;
+}
+
 export async function GET(request: Request, { params }: Params) {
   const { id } = await params;
   const { bounty, submission } = await getActionSubmissionInfo(id);
-  const origin = new URL(request.url).origin;
+  const origin = getPublicOrigin(request);
 
   return NextResponse.json(
     {

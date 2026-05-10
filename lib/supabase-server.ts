@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { createSupabaseFetch } from "@/lib/supabase-fetch";
 
 export function getServerSupabase() {
   const url = process.env.SUPABASE_SERVER_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,6 +12,9 @@ export function getServerSupabase() {
   return createClient(url, serviceKey, {
     auth: {
       persistSession: false
+    },
+    global: {
+      fetch: createSupabaseFetch(serviceKey)
     }
   });
 }

@@ -1897,17 +1897,12 @@ function BountyDetail({
     : "Connect the bounty author wallet to grade, select, verify, or pay this award.";
   const defaultExpandedSubmissionId = defaultShareSubmission?.id || "";
   const [expandedSubmissionIds, setExpandedSubmissionIds] = useState<Set<string>>(new Set());
-  const [activeShareSubmissionId, setActiveShareSubmissionId] = useState("");
-  const activeShareSubmission =
-    orderedSubmissions.find((submission) => submission.id === activeShareSubmissionId) || defaultShareSubmission;
 
   useEffect(() => {
     setExpandedSubmissionIds(defaultExpandedSubmissionId ? new Set([defaultExpandedSubmissionId]) : new Set());
-    setActiveShareSubmissionId(defaultExpandedSubmissionId);
   }, [bounty.id, defaultExpandedSubmissionId]);
 
   function toggleSubmissionExpanded(submissionId: string) {
-    setActiveShareSubmissionId(submissionId);
     setExpandedSubmissionIds((current) => {
       const next = new Set(current);
       if (next.has(submissionId)) {
@@ -1921,7 +1916,6 @@ function BountyDetail({
   }
 
   function handleShareTipLink(submissionId: string) {
-    setActiveShareSubmissionId(submissionId);
     onCopyBlink(submissionId);
   }
 
@@ -2039,6 +2033,7 @@ function BountyDetail({
                           disabledReason={authorActionMessage}
                           onChange={(patch) => onReviewChange(submission.id, patch)}
                         />
+                        <TipActionPreviewPanel bounty={bounty} submission={submission} blinkOrigin={blinkOrigin} onCopyBlink={handleShareTipLink} />
                       </>
                     ) : null}
                   </article>
@@ -2052,10 +2047,6 @@ function BountyDetail({
               </div>
             )}
           </div>
-
-          {activeShareSubmission ? (
-            <TipActionPreviewPanel bounty={bounty} submission={activeShareSubmission} blinkOrigin={blinkOrigin} onCopyBlink={handleShareTipLink} />
-          ) : null}
 
           <ManualReceiptVerifierPanel
             bounty={bounty}
